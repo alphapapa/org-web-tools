@@ -97,7 +97,7 @@ outside of it) will be converted."
 
 (defun org-web-tools--eww-readable (html)
   "Return \"readable\" part of HTML with title.
-Returns list (HTML . TITLE).  Based on `eww-readable'."
+Returns list (TITLE . HTML).  Based on `eww-readable'."
   (let* ((dom (with-temp-buffer
                 (insert html)
                 (libxml-parse-html-region (point-min) (point-max))))
