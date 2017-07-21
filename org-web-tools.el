@@ -59,7 +59,7 @@ Uses the `dom' library."
 (defun org-web-tools-insert-org-link-for-url (url)
   "Insert Org link to URL using title of HTML page at URL.
 If URL is not given, look for first URL in kill-ring."
-  (interactive (org-web-tools--get-first-url))
+  (interactive (list (org-web-tools--get-first-url)))
   (let* ((html (org-web-tools--get-url url))
          (title (org-web-tools--html-title html))
          (link (org-make-link-string url title)))
@@ -139,7 +139,7 @@ If SKIP is non-nil, it is passed to `org-map-entries', which see.  Note that \"h
 ;;;###autoload
 (defun org-web-tools-insert-web-page-as-entry (url)
   "Insert web page contents as Org sibling entry."
-  (interactive (org-web-tools--get-first-url))
+  (interactive (list (org-web-tools--get-first-url)))
   (let* ((capture-fn #'org-web-tools--url-as-readable-org)
          (content (s-trim (funcall capture-fn url))))
     (beginning-of-line) ; Necessary for org-paste-subtree to choose the right heading level
