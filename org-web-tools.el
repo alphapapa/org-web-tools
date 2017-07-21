@@ -1,4 +1,4 @@
-;;; org-web-tools.el --- Display and process web content with Org-mode  -*- lexical-binding: t -*-
+;;; org-web-tools.el --- Display and capture web content with Org-mode  -*- lexical-binding: t -*-
 
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools
