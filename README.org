@@ -18,6 +18,8 @@ This package requires Emacs 25.1 or later.
 
 ** MELPA
 
+*Note:* This is not on MELPA yet.  Please consider installing it manually, testing, and providing some feedback.  I'd like to polish it up before submitting it to MELPA.
+
 If you installed from MELPA, just run one of the [[*Usage][commands]] below.  If you want to use any of the functions in your own code, you should ~(require 'org-web-tools)~.
 
 ** Manual
