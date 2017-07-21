@@ -196,7 +196,7 @@ stars (i.e. the highest level possible has 1 star)."
          (difference (- buffer-highest-level level))
          (adjust-by (when (<= difference 0)
                       (1+ (* -1 difference)))))
-    (when difference
+    (when adjust-by
       ;; Demote headings in buffer
       (org-map-entries
        (lambda ()
