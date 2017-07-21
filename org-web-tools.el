@@ -150,6 +150,7 @@ Uses the `dom' library."
     (insert html)
     ;; TODO: Add version checking for --wrap=none/--no-wrap argument
     (unless (= 0 (call-process-region (point-min) (point-max) "pandoc" t t nil "--no-wrap" "-f" "html" "-t" "org"))
+      ;; TODO: Add error output, see org-protocol-capture-html
       (error "Pandoc failed"))
     (org-web-tools--remove-dos-crlf)
     (buffer-string)))
