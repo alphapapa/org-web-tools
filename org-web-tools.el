@@ -1,10 +1,90 @@
-(require 'dash)
+;;; Code:
+
+;;;; Requirements
+
 (require 'cl-lib)
-(require 'url)
+(require 'dash)
 (require 'dom)
 (require 'eww)
 (require 'org)
 (require 's)
+(require 'url)
+
+;;;; Commands
+
+;;;###autoload
+(defun org-web-tools-insert-link-for-url (url)
+  "Insert Org link to URL using title of HTML page at URL.
+If URL is not given, look for first URL in kill-ring."
+  (interactive (list (org-web-tools--get-first-url)))
+  (let* ((html (org-web-tools--get-url url))
+         (title (org-web-tools--html-title html))
+         (link (org-make-link-string url title)))
+    (insert link)))
+
+;;;###autoload
+(defun org-web-tools-insert-web-page-as-entry (url)
+  "Insert web page contents as Org sibling entry.
+Page is processed with `eww-readable'."
+  (interactive (list (org-web-tools--get-first-url)))
+  (let* ((capture-fn #'org-web-tools--url-as-readable-org)
+         (content (s-trim (funcall capture-fn url))))
+    (beginning-of-line) ; Necessary for org-paste-subtree to choose the right heading level
+    (org-paste-subtree nil content)))
+
+;;;###autoload
+(defun org-web-tools-read-url-as-org (url)
+  "Read URL's readable content in an Org buffer."
+  (interactive (list (org-web-tools--get-first-url)))
+  (let ((entry (org-web-tools--url-as-readable-org url)))
+    (when entry
+      (switch-to-buffer url)
+      (org-mode)
+      (insert entry)
+      ;; Set buffer title
+      (goto-char (point-min))
+      (rename-buffer (cdr (org-web-tools--read-org-bracket-link))))))
+
+;;;###autoload
+(defun org-web-tools-convert-url-list-to-page-entries ()
+  "Convert list of URLs into Org entries containing page content processed with `eww-readable'.
+All URLs in the current entry (i.e. this does not look deeper in
+the subtree, or outside of it) will be converted."
+  (interactive)
+  (let ((level (org-outline-level))
+        (beg (org-entry-beginning-position))
+        url-beg url new-entry)
+    (while (progn
+             (goto-char beg)
+             (goto-char (org-entry-end-position))  ; Work from the bottom of the list to the top, makes it simpler
+             (setq url-beg (re-search-backward (rx "http" (optional "s") "://") beg 'no-error)))
+      (setq url (buffer-substring (line-beginning-position) (line-end-position)))
+      ;; TODO: Needs error handling
+      (when (setq new-entry (org-web-tools--url-as-readable-org url))
+        ;; FIXME: If a URL fails to fetch, this should skip it, but
+        ;; that means the failed URL will become part of the next
+        ;; entry's contents.  Might need to read the whole list at
+        ;; once, use markers to track the list's position, then
+        ;; replace the whole list with any errored URLs after it's
+        ;; done.
+        (goto-char url-beg) ; This should NOT be necessary!  But it is, because the point moves back down a line!  Why?!
+        (delete-region (line-beginning-position) (line-end-position))
+        (org-paste-subtree level new-entry)))))
+
+;;;; Functions
+
+(defun org-web-tools--eww-readable (html)
+  "Return \"readable\" part of HTML with title.
+Returns list (HTML . TITLE).  Based on `eww-readable'."
+  (let* ((dom (with-temp-buffer
+                (insert html)
+                (libxml-parse-html-region (point-min) (point-max))))
+         (title (caddr (car (dom-by-tag dom 'title)))))
+    (eww-score-readability dom)
+    (cons (with-temp-buffer
+            (shr-dom-print (eww-highest-readability dom))
+            (buffer-string))
+          title)))
 
 (defun org-web-tools--get-url (url)
   "Return content for URL as string.
@@ -31,19 +111,6 @@ headers ourselves. "
         (coding-system-error nil))
       (buffer-string))))
 
-(defun org-web-tools--eww-readable (html)
-  "Return \"readable\" part of HTML with title.
-Returns list (HTML . TITLE).  Based on `eww-readable'."
-  (let* ((dom (with-temp-buffer
-                (insert html)
-                (libxml-parse-html-region (point-min) (point-max))))
-         (title (caddr (car (dom-by-tag dom 'title)))))
-    (eww-score-readability dom)
-    (cons (with-temp-buffer
-            (shr-dom-print (eww-highest-readability dom))
-            (buffer-string))
-          title)))
-
 (defun org-web-tools--html-title (html)
   "Return title of HTML page.
 Uses the `dom' library."
@@ -55,23 +122,6 @@ Uses the `dom' library."
          (title (caddr (car (dom-by-tag dom 'title)))))
     title))
 
-;;;###autoload
-(defun org-web-tools-insert-org-link-for-url (url)
-  "Insert Org link to URL using title of HTML page at URL.
-If URL is not given, look for first URL in kill-ring."
-  (interactive (list (org-web-tools--get-first-url)))
-  (let* ((html (org-web-tools--get-url url))
-         (title (org-web-tools--html-title html))
-         (link (org-make-link-string url title)))
-    (insert link)))
-
-(defun org-web-tools--get-first-url ()
-  "Return URL in clipboard, or first URL in kill-ring, or nil if none."
-  (cl-loop for item in (append (list (gui-get-selection 'CLIPBOARD))
-                               kill-ring)
-           if (string-match (rx bol "http" (optional "s") "://") item)
-           return item))
-
 (defun org-web-tools--html-to-org-with-pandoc (html)
   "Return string of HTML converted to Org with Pandoc."
   (with-temp-buffer
@@ -80,15 +130,6 @@ If URL is not given, look for first URL in kill-ring."
       (error "Pandoc failed."))
     (org-web-tools--remove-dos-crlf)
     (buffer-string)))
-
-
-(defun org-web-tools--remove-dos-crlf ()
-  "Remove all DOS CRLF (^M) in buffer."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (while (search-forward (string ?\C-m) nil t)
-      (replace-match ""))))
 
 (defun org-web-tools--url-as-readable-org (url)
   "Return string containing Org entry of URL's web page content.
@@ -114,6 +155,8 @@ first-level entry for writing comments."
               "** Article" "\n\n")
       (buffer-string))))
 
+;;;;; Misc
+
 (defun org-web-tools--demote-headings-below (level &optional skip)
   "If any headings in current buffer are at or above LEVEL, demote all headings in buffer so the highest level is below LEVEL.
 If SKIP is non-nil, it is passed to `org-map-entries', which see.  Note that \"highest level\" has the lowest number of stars."
@@ -136,52 +179,12 @@ If SKIP is non-nil, it is passed to `org-map-entries', which see.  Note that \"h
            (org-demote)))
        t nil skip))))
 
-;;;###autoload
-(defun org-web-tools-insert-web-page-as-entry (url)
-  "Insert web page contents as Org sibling entry."
-  (interactive (list (org-web-tools--get-first-url)))
-  (let* ((capture-fn #'org-web-tools--url-as-readable-org)
-         (content (s-trim (funcall capture-fn url))))
-    (beginning-of-line) ; Necessary for org-paste-subtree to choose the right heading level
-    (org-paste-subtree nil content)))
-
-;;;###autoload
-(defun org-web-tools-url-list-to-page-entries ()
-  "Turn list of URLs into Org entries containing page content processed with `eww-readable'.
-All URLs in the current entry (i.e. this does not look deeper in the subtree, or outside of it) will be converted."
-  (interactive)
-  (let ((level (org-outline-level))
-        (beg (org-entry-beginning-position))
-        url-beg url new-entry)
-    (while (progn
-             (goto-char beg)
-             (goto-char (org-entry-end-position))  ; Work from the bottom of the list to the top, makes it simpler
-             (setq url-beg (re-search-backward (rx "http" (optional "s") "://") beg 'no-error)))
-      (setq url (buffer-substring (line-beginning-position) (line-end-position)))
-      ;; TODO: Needs error handling
-      (when (setq new-entry (org-web-tools--url-as-readable-org url))
-        ;; FIXME: If a URL fails to fetch, this should skip it, but
-        ;; that means the failed URL will become part of the next
-        ;; entry's contents.  Might need to read the whole list at
-        ;; once, use markers to track the list's position, then
-        ;; replace the whole list with any errored URLs after it's
-        ;; done.
-        (goto-char url-beg) ; This should NOT be necessary!  But it is, because the point moves back down a line!  Why?!
-        (delete-region (line-beginning-position) (line-end-position))
-        (org-paste-subtree level new-entry)))))
-
-;;;###autoload
-(defun org-web-tools-read-url-as-org (url)
-  "Read URL's readable content in an Org buffer."
-  (interactive (list (org-web-tools--get-first-url)))
-  (let ((entry (org-web-tools--url-as-readable-org url)))
-    (when entry
-      (switch-to-buffer url)
-      (org-mode)
-      (insert entry)
-      ;; Set buffer title
-      (goto-char (point-min))
-      (rename-buffer (cdr (org-web-tools--read-org-bracket-link))))))
+(defun org-web-tools--get-first-url ()
+  "Return URL in clipboard, or first URL in kill-ring, or nil if none."
+  (cl-loop for item in (append (list (gui-get-selection 'CLIPBOARD))
+                               kill-ring)
+           if (string-match (rx bol "http" (optional "s") "://") item)
+           return item))
 
 (defun org-web-tools--read-org-bracket-link (&optional link)
   "Return (TARGET . DESCRIPTION) for Org bracket LINK or next link on current line."
@@ -200,3 +203,11 @@ All URLs in the current entry (i.e. this does not look deeper in the subtree, or
       (when (and target desc)
         ;; Link found; return parts
         (cons target desc)))))
+
+(defun org-web-tools--remove-dos-crlf ()
+  "Remove all DOS CRLF (^M) in buffer."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (while (search-forward (string ?\C-m) nil t)
+      (replace-match ""))))
