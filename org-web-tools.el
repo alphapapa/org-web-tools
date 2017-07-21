@@ -174,7 +174,7 @@ first-level entry for writing comments."
       (org-web-tools--demote-headings-below 2)
       ;; Insert headings at top
       (goto-char (point-min))
-      (insert "* " link " :website" "\n\n"
+      (insert "* " link " :website:" "\n\n"
               timestamp "\n\n"
               "** Article" "\n\n")
       (buffer-string))))
