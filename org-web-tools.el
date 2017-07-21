@@ -148,6 +148,7 @@ Uses the `dom' library."
   "Return string of HTML converted to Org with Pandoc."
   (with-temp-buffer
     (insert html)
+    ;; TODO: Add version checking for --wrap=none/--no-wrap argument
     (unless (= 0 (call-process-region (point-min) (point-max) "pandoc" t t nil "--no-wrap" "-f" "html" "-t" "org"))
       (error "Pandoc failed"))
     (org-web-tools--remove-dos-crlf)
