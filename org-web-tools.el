@@ -36,7 +36,7 @@
 ;;;###autoload
 (defun org-web-tools-insert-link-for-url (url)
   "Insert Org link to URL using title of HTML page at URL.
-If URL is not given, look for first URL in kill-ring."
+If URL is not given, look for first URL in the kill-ring."
   (interactive (list (org-web-tools--get-first-url)))
   (let* ((html (org-web-tools--get-url url))
          (title (org-web-tools--html-title html))
@@ -45,7 +45,7 @@ If URL is not given, look for first URL in kill-ring."
 
 ;;;###autoload
 (defun org-web-tools-insert-web-page-as-entry (url)
-  "Insert web page contents as Org sibling entry.
+  "Insert web page contents of URL as Org sibling entry.
 Page is processed with `eww-readable'."
   (interactive (list (org-web-tools--get-first-url)))
   (let* ((capture-fn #'org-web-tools--url-as-readable-org)
@@ -68,9 +68,10 @@ Page is processed with `eww-readable'."
 
 ;;;###autoload
 (defun org-web-tools-convert-url-list-to-page-entries ()
-  "Convert list of URLs into Org entries containing page content processed with `eww-readable'.
-All URLs in the current entry (i.e. this does not look deeper in
-the subtree, or outside of it) will be converted."
+  "Convert list of URLs into Org entries containing page content.
+Page content is processed with `eww-readable'.  All URLs in the
+current entry (i.e. this does not look deeper in the subtree, or
+outside of it) will be converted."
   (interactive)
   (let ((level (org-outline-level))
         (beg (org-entry-beginning-position))
@@ -112,7 +113,7 @@ Returns list (HTML . TITLE).  Based on `eww-readable'."
 This uses `url-retrieve-synchronously' to make a request with the
 URL, then returns the response body.  Since that function returns
 the entire response, including headers, we must remove the
-headers ourselves. "
+headers ourselves."
   (let* ((response-buffer (url-retrieve-synchronously url nil t))
          (encoded-html (with-current-buffer response-buffer
                          (pop-to-buffer response-buffer)
@@ -148,7 +149,7 @@ Uses the `dom' library."
   (with-temp-buffer
     (insert html)
     (unless (= 0 (call-process-region (point-min) (point-max) "pandoc" t t nil "--no-wrap" "-f" "html" "-t" "org"))
-      (error "Pandoc failed."))
+      (error "Pandoc failed"))
     (org-web-tools--remove-dos-crlf)
     (buffer-string)))
 
@@ -204,7 +205,7 @@ stars (i.e. the highest level possible has 1 star)."
        t nil skip))))
 
 (defun org-web-tools--get-first-url ()
-  "Return URL in clipboard, or first URL in kill-ring, or nil if none."
+  "Return URL in clipboard, or first URL in the kill-ring, or nil if none."
   (cl-loop for item in (append (list (gui-get-selection 'CLIPBOARD))
                                kill-ring)
            if (string-match (rx bol "http" (optional "s") "://") item)
