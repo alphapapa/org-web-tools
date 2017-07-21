@@ -169,3 +169,34 @@ All URLs in the current entry (i.e. this does not look deeper in the subtree, or
         (goto-char url-beg) ; This should NOT be necessary!  But it is, because the point moves back down a line!  Why?!
         (delete-region (line-beginning-position) (line-end-position))
         (org-paste-subtree level new-entry)))))
+
+;;;###autoload
+(defun org-web-tools-read-url-as-org (url)
+  "Read URL's readable content in an Org buffer."
+  (interactive (list (org-web-tools--get-first-url)))
+  (let ((entry (org-web-tools--url-as-readable-org url)))
+    (when entry
+      (switch-to-buffer url)
+      (org-mode)
+      (insert entry)
+      ;; Set buffer title
+      (goto-char (point-min))
+      (rename-buffer (cdr (org-web-tools--read-org-bracket-link))))))
+
+(defun org-web-tools--read-org-bracket-link (&optional link)
+  "Return (TARGET . DESCRIPTION) for Org bracket LINK or next link on current line."
+  ;; Searching to the end of the line seems the simplest way
+  (save-excursion
+    (let (target desc)
+      (if link
+          ;; Link passed as arg
+          (when (string-match org-bracket-link-regexp link)
+            (setq target (match-string-no-properties 1 link)
+                  desc (match-string-no-properties 3 link)))
+        ;; No arg; get link from buffer
+        (when (re-search-forward org-bracket-link-regexp (point-at-eol) t)
+          (setq target (match-string-no-properties 1)
+                desc (match-string-no-properties 3))))
+      (when (and target desc)
+        ;; Link found; return parts
+        (cons target desc)))))
