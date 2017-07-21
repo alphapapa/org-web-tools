@@ -158,8 +158,11 @@ first-level entry for writing comments."
 ;;;;; Misc
 
 (defun org-web-tools--demote-headings-below (level &optional skip)
-  "If any headings in current buffer are at or above LEVEL, demote all headings in buffer so the highest level is below LEVEL.
-If SKIP is non-nil, it is passed to `org-map-entries', which see.  Note that \"highest level\" has the lowest number of stars."
+  "Demote all headings in buffer so the highest level is below LEVEL.
+If all headings are already below that level, none are adjusted.
+If SKIP is non-nil, it is passed to `org-map-entries', which see.
+Note that \"highest level\" means the fewest number of
+stars (i.e. the highest level possible has 1 star)."
   (let* ((buffer-highest-level (progn
                                  (goto-char (point-min))
                                  (when (org-before-first-heading-p)
