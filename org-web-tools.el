@@ -1,3 +1,24 @@
+;;; org-web-tools.el --- Display and process web content with Org-mode  -*- lexical-binding: t -*-
+
+;; Author: Adam Porter <adam@alphapapa.net>
+;; Url: http://github.com/alphapapa/org-web-tools
+;; Version: 0.1.0-pre
+;; Package-Requires: ((emacs "25.1") (org "9.0") (dash "2.12") (s "1.10.0"))
+;; Keywords: hypermedia, outlines, Org, Web
+
+;;; Commentary:
+
+;; This file contains library functions and commands useful for
+;; retrieving web page content and processing it into Org-mode
+;; content.
+
+;; For example, you can copy a URL to the clipboard or kill-ring, then
+;; run a command that downloads the page, isolates the "readable"
+;; content with `eww-readable', converts it to Org-mode content with
+;; Pandoc, and displays it in an Org-mode buffer.  Another command
+;; does all of that but inserts it as an Org sibling entry instead of
+;; displaying it in a new buffer.
+
 ;;; Code:
 
 ;;;; Requirements
@@ -214,3 +235,8 @@ stars (i.e. the highest level possible has 1 star)."
     (goto-char (point-min))
     (while (search-forward (string ?\C-m) nil t)
       (replace-match ""))))
+
+
+(provide 'org-web-tools)
+
+;;; org-web-tools.el ends here
