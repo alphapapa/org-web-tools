@@ -236,7 +236,6 @@ stars (i.e. the highest level possible has 1 star)."
     (while (search-forward (string ?\C-m) nil t)
       (replace-match ""))))
 
-
 (provide 'org-web-tools)
 
 ;;; org-web-tools.el ends here
