@@ -102,10 +102,10 @@ Returns list (HTML . TITLE).  Based on `eww-readable'."
                 (libxml-parse-html-region (point-min) (point-max))))
          (title (caddr (car (dom-by-tag dom 'title)))))
     (eww-score-readability dom)
-    (cons (with-temp-buffer
+    (cons title
+          (with-temp-buffer
             (shr-dom-print (eww-highest-readability dom))
-            (buffer-string))
-          title)))
+            (buffer-string)))))
 
 (defun org-web-tools--get-url (url)
   "Return content for URL as string.
@@ -159,7 +159,7 @@ be a top-level heading, with article contents below a
 second-level \"Article\" heading, and a timestamp in the
 first-level entry for writing comments."
   (-let* ((html (org-web-tools--get-url url))
-          ((readable . title) (org-web-tools--eww-readable html))
+          ((title . readable) (org-web-tools--eww-readable html))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
           (link (org-make-link-string url title))
           (timestamp (format-time-string (concat "[" (substring (cdr org-time-stamp-formats) 1 -1) "]"))))
