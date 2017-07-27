@@ -167,7 +167,6 @@ the entire response, including headers, we must remove the
 headers ourselves."
   (let* ((response-buffer (url-retrieve-synchronously url nil t))
          (encoded-html (with-current-buffer response-buffer
-                         (pop-to-buffer response-buffer)
                          ;; Skip HTTP headers
                          (re-search-forward (rx (repeat 2 (or "\n" "\r"))) nil t)
                          (delete-region (point-min) (point))
