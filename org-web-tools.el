@@ -168,8 +168,7 @@ headers ourselves."
   (let* ((response-buffer (url-retrieve-synchronously url nil t))
          (encoded-html (with-current-buffer response-buffer
                          ;; Skip HTTP headers
-                         (re-search-forward (rx (repeat 2 (or "\n" "\r"))) nil t)
-                         (delete-region (point-min) (point))
+                         (delete-region (point-min) url-http-end-of-headers)
                          (buffer-string))))
     (kill-buffer response-buffer)     ; Not sure if necessary to avoid leaking buffer
     (with-temp-buffer
