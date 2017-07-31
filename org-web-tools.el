@@ -243,7 +243,9 @@ stars (i.e. the highest level possible has 1 star)."
                                  (cl-loop while (org-at-heading-p)
                                           collect (org-outline-level) into result
                                           do (outline-next-heading)
-                                          finally return (seq-min result))))
+                                          finally return (if result
+                                                             (seq-min result)
+                                                           0))))
          (difference (- buffer-highest-level level))
          (adjust-by (when (<= difference 0)
                       (1+ (* -1 difference)))))
