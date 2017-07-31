@@ -204,13 +204,21 @@ Uses the `dom' library."
     (org-web-tools--remove-dos-crlf)
     (buffer-string)))
 
-(defun org-web-tools--url-as-readable-org (url)
+(defun org-web-tools--url-as-readable-org (&optional url)
   "Return string containing Org entry of URL's web page content.
 Content is processed with `eww-readable' and Pandoc.  Entry will
 be a top-level heading, with article contents below a
 second-level \"Article\" heading, and a timestamp in the
 first-level entry for writing comments."
-  (-let* ((html (org-web-tools--get-url url))
+  ;; By taking an optional URL, and getting it from the clipboard if
+  ;; none is given, this becomes suitable for use in an org-capture
+  ;; template, like:
+
+  ;; ("wr" "Capture Web site with eww-readable" entry
+  ;;  (file "~/org/articles.org")
+  ;;  "%(org-web-tools--url-as-readable-org)")
+  (-let* ((url (or url (org-web-tools--get-first-url)))
+          (html (org-web-tools--get-url url))
           ((title . readable) (org-web-tools--eww-readable html))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
           (link (org-make-link-string url title))
