@@ -89,10 +89,7 @@
   "Insert Org link to URL using title of HTML page at URL.
 If URL is not given, look for first URL in the kill-ring."
   (interactive (list (org-web-tools--get-first-url)))
-  (let* ((html (org-web-tools--get-url url))
-         (title (org-web-tools--html-title html))
-         (link (org-make-link-string url title)))
-    (insert link)))
+  (insert (org-web-tools--org-link-for-url url)))
 
 ;;;###autoload
 (defun org-web-tools-insert-web-page-as-entry (url)
@@ -145,6 +142,14 @@ outside of it) will be converted."
         (org-paste-subtree level new-entry)))))
 
 ;;;; Functions
+
+(cl-defun org-web-tools--org-link-for-url (&optional (url (org-web-tools--get-first-url)))
+  "Return Org link to URL using title of HTML page at URL.
+If URL is not given, look for first URL in the kill-ring."
+  (let* ((html (org-web-tools--get-url url))
+         (title (org-web-tools--html-title html))
+         (link (org-make-link-string url title)))
+    link))
 
 (defun org-web-tools--eww-readable (html)
   "Return \"readable\" part of HTML with title.
