@@ -196,7 +196,7 @@ Uses the `dom' library."
                 (insert html)
                 (libxml-parse-html-region (point-min) (point-max))))
          (title (caddr (car (dom-by-tag dom 'title)))))
-    title))
+    (org-web-tools--cleanup-title title)))
 
 (defun org-web-tools--html-to-org-with-pandoc (html)
   "Return string of HTML converted to Org with Pandoc."
@@ -225,6 +225,7 @@ first-level entry for writing comments."
   (-let* ((url (or url (org-web-tools--get-first-url)))
           (html (org-web-tools--get-url url))
           ((title . readable) (org-web-tools--eww-readable html))
+          (title (org-web-tools--cleanup-title title))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
           (link (org-make-link-string url title))
           (timestamp (format-time-string (concat "[" (substring (cdr org-time-stamp-formats) 1 -1) "]"))))
@@ -242,6 +243,13 @@ first-level entry for writing comments."
       (buffer-string))))
 
 ;;;;; Misc
+
+(defun org-web-tools--cleanup-title (title)
+  "Return TITLE with spurious whitespace removed."
+  (->> title
+       (s-replace "\n" " ")
+       (s-trim)
+       (s-collapse-whitespace)))
 
 (defun org-web-tools--demote-headings-below (level &optional skip)
   "Demote all headings in buffer so the highest level is below LEVEL.
