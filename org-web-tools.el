@@ -92,14 +92,16 @@ If URL is not given, look for first URL in the kill-ring."
   (insert (org-web-tools--org-link-for-url url)))
 
 ;;;###autoload
-(defun org-web-tools-insert-web-page-as-entry (url)
+(cl-defun org-web-tools-insert-web-page-as-entry (url &key (capture-fn #'org-web-tools--url-as-readable-org))
   "Insert web page contents of URL as Org sibling entry.
 Page is processed with `eww-readable'."
   (interactive (list (org-web-tools--get-first-url)))
-  (let* ((capture-fn #'org-web-tools--url-as-readable-org)
-         (content (s-trim (funcall capture-fn url))))
-    (beginning-of-line) ; Necessary for org-paste-subtree to choose the right heading level
-    (org-paste-subtree nil content)))
+  (let ((content (s-trim (funcall capture-fn url))))
+    (unless (string-empty-p content)
+      (beginning-of-line) ; Necessary for org-paste-subtree to choose the right heading level
+      (org-paste-subtree nil content)
+      ;; Return t because org-paste-subtree doesn't
+      t)))
 
 ;;;###autoload
 (defun org-web-tools-read-url-as-org (url)
