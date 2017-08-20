@@ -6,7 +6,7 @@
 
 * org-web-tools                                                    :noexport:
 
-[[https://melpa.org/#/helm-org-rifle][file:https://melpa.org/packages/org-web-tools-badge.svg]] [[https://stable.melpa.org/#/helm-org-rifle][file:https://stable.melpa.org/packages/org-web-tools-badge.svg]]
+[[https://melpa.org/#/org-web-tools][file:https://melpa.org/packages/org-web-tools-badge.svg]] [[https://stable.melpa.org/#/org-web-tools][file:https://stable.melpa.org/packages/org-web-tools-badge.svg]]
 
 This file contains library functions and commands useful for retrieving web page content and processing it into Org-mode content.
 
