@@ -114,7 +114,7 @@ Page is processed with `eww-readable'."
   (let ((content (s-trim (funcall capture-fn url))))
     (unless (string-empty-p content)
       (unless (eq major-mode 'org-mode)
-        (warn "Pasting Org subtree into non-org-mode buffer; this may cause problems (`org-web-tools-insert-web-page-as-entry')"))
+        (display-warning 'org-web-tools "Pasting Org subtree into non-org-mode buffer; this may cause problems"))
       (beginning-of-line) ; Necessary for org-paste-subtree to choose the right heading level
       (org-paste-subtree nil content)
       ;; Return t because org-paste-subtree doesn't
