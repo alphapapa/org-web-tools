@@ -217,14 +217,27 @@ Uses the `dom' library."
          (title (caddr (car (dom-by-tag dom 'title)))))
     (org-web-tools--cleanup-title title)))
 
+(defun pandoc-wrap-optionp ()
+  "Return true if pandoc version is greater or equal to 1.16,
+where --no-wrap is deprecated"
+  (let ((pandoc-version (cadr (s-split
+			       " "
+			       (car (s-lines (shell-command-to-string "/usr/bin/pandoc --version")))))))
+    (or (s-less? "1.16" pandoc-version) (s-equals? "1.16" pandoc-version)))
+
+(defun get-wrap-option ()
+  "Returns the wrap option based on the version of pandoc"
+  (cond ((pandoc-wrap-optionp) "--wrap=none")
+	(t "--no-wrap")))
+
 (defun org-web-tools--html-to-org-with-pandoc (html)
   "Return string of HTML converted to Org with Pandoc."
   (with-temp-buffer
     (insert html)
-    ;; TODO: Add version checking for --wrap=none/--no-wrap argument
-    (unless (zerop (call-process-region (point-min) (point-max) "pandoc" t t nil "--no-wrap" "-f" "html" "-t" "org"))
-      ;; TODO: Add error output, see org-protocol-capture-html
-      (error "Pandoc failed"))
+    (let ((wrap-option (get-wrap-option)))
+      (unless (zerop (call-process-region (point-min) (point-max) "pandoc" t t nil wrap-option "-f" "html" "-t" "org"))
+	;; TODO: Add error output, see org-protocol-capture-html
+	(error "Pandoc failed")))
     (org-web-tools--remove-dos-crlf)
     (buffer-string)))
 
