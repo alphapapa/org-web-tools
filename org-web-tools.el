@@ -244,7 +244,7 @@ first-level entry for writing comments."
   (-let* ((url (or url (org-web-tools--get-first-url)))
           (html (org-web-tools--get-url url))
           ((title . readable) (org-web-tools--eww-readable html))
-          (title (org-web-tools--cleanup-title title))
+          (title (org-web-tools--cleanup-title (or title "")))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
           (link (org-make-link-string url title))
           (timestamp (format-time-string (concat "[" (substring (cdr org-time-stamp-formats) 1 -1) "]"))))
