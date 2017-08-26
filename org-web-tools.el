@@ -97,6 +97,59 @@
 (require 's)
 (require 'url)
 
+;;;; Pandoc support
+
+(defun org-web-tools--html-to-org-with-pandoc (html)
+  "Return string of HTML converted to Org with Pandoc."
+  (with-temp-buffer
+    (insert html)
+    (unless (zerop (call-process-region (point-min) (point-max) "pandoc"
+                                        t t nil
+                                        (org-web-tools--pandoc-no-wrap-option)
+                                        "-f" "html" "-t" "org"))
+      ;; TODO: Add error output, see org-protocol-capture-html
+      (error "Pandoc failed"))
+    (org-web-tools--remove-dos-crlf)
+    (buffer-string)))
+
+(defun org-web-tools--pandoc-no-wrap-option ()
+  "Return `org-web-tools--pandoc-no-wrap-option', setting if unset."
+  (or org-web-tools--pandoc-no-wrap-option
+      (setq org-web-tools--pandoc-no-wrap-option (org-web-tools--check-pandoc-no-wrap-option))))
+
+(defun org-web-tools--check-pandoc-no-wrap-option ()
+  "Return appropriate no-wrap option string depending on Pandoc version."
+  ;; Pandoc >= 1.16 deprecates the --no-wrap option, replacing it with
+  ;; --wrap=none.  Sending the wrong option causes output to STDERR,
+  ;; which `call-process-region' doesn't like.  So we test Pandoc to see
+  ;; which option to use.
+  (with-temp-buffer
+    (let* ((limit 3)
+           (checked 0)
+           (process (start-process "test-pandoc" (current-buffer)
+                                   "pandoc" "--dump-args" "--no-wrap")))
+      (while (process-live-p process)
+        (if (= checked limit)
+            (progn
+              ;; Pandoc didn't exit in time.  Kill it and raise an
+              ;; error.  This function will return `nil' and
+              ;; `org-web-tools--pandoc-no-wrap-option' will remain
+              ;; `nil', which will cause this function to run again and
+              ;; set the const when a capture is run.
+              (set-process-query-on-exit-flag process nil)
+              (error "Unable to test Pandoc!  Please report this bug! (include the output of \"pandoc --dump-args --no-wrap\")"))
+          (sleep-for 0.2)
+          (cl-incf checked)))
+      (if (and (zerop (process-exit-status process))
+               (not (string-match "--no-wrap is deprecated" (buffer-string))))
+          "--no-wrap"
+        "--wrap=none"))))
+
+(defconst org-web-tools--pandoc-no-wrap-option nil
+  "Option to pass to Pandoc to disable wrapping.
+Pandoc >= 1.16 deprecates `--no-wrap' in favor of
+`--wrap=none'.")
+
 ;;;; Commands
 
 ;;;###autoload
@@ -216,17 +269,6 @@ Uses the `dom' library."
                 (libxml-parse-html-region (point-min) (point-max))))
          (title (caddr (car (dom-by-tag dom 'title)))))
     (org-web-tools--cleanup-title title)))
-
-(defun org-web-tools--html-to-org-with-pandoc (html)
-  "Return string of HTML converted to Org with Pandoc."
-  (with-temp-buffer
-    (insert html)
-    ;; TODO: Add version checking for --wrap=none/--no-wrap argument
-    (unless (zerop (call-process-region (point-min) (point-max) "pandoc" t t nil "--no-wrap" "-f" "html" "-t" "org"))
-      ;; TODO: Add error output, see org-protocol-capture-html
-      (error "Pandoc failed"))
-    (org-web-tools--remove-dos-crlf)
-    (buffer-string)))
 
 (defun org-web-tools--url-as-readable-org (&optional url)
   "Return string containing Org entry of URL's web page content.
