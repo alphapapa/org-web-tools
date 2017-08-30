@@ -109,7 +109,7 @@
                                         "-f" "html" "-t" "org"))
       ;; TODO: Add error output, see org-protocol-capture-html
       (error "Pandoc failed"))
-    (org-web-tools--remove-dos-crlf)
+    (org-web-tools--clean-pandoc-output)
     (buffer-string)))
 
 (defun org-web-tools--pandoc-no-wrap-option ()
@@ -145,10 +145,20 @@
           "--no-wrap"
         "--wrap=none"))))
 
+(defun org-web-tools--clean-pandoc-output ()
+  "Remove spurious characters from Pandoc output in current buffer."
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward org-web-tools--pandoc-bad-chars-re nil t)
+      (replace-match ""))))
+
 (defconst org-web-tools--pandoc-no-wrap-option nil
   "Option to pass to Pandoc to disable wrapping.
 Pandoc >= 1.16 deprecates `--no-wrap' in favor of
 `--wrap=none'.")
+
+(defvar org-web-tools--pandoc-bad-chars-re (rx (or " " ""))
+  "Regular expression matching spurious characters to be removed from Pandoc output.")
 
 ;;;; Commands
 
@@ -363,14 +373,6 @@ stars (i.e. the highest level possible has 1 star)."
       (when (and target desc)
         ;; Link found; return parts
         (cons target desc)))))
-
-(defun org-web-tools--remove-dos-crlf ()
-  "Remove all DOS CRLF (^M) in buffer."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (while (search-forward (string ?\C-m) nil t)
-      (replace-match ""))))
 
 (provide 'org-web-tools)
 
