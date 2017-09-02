@@ -146,10 +146,28 @@
         "--wrap=none"))))
 
 (defun org-web-tools--clean-pandoc-output ()
-  "Remove spurious characters from Pandoc output in current buffer."
+  "Remove unwanted things in current buffer of Pandoc output."
+  (org-web-tools--remove-bad-characters)
+  (org-web-tools--remove-html-blocks))
+
+(defun org-web-tools--remove-bad-characters ()
+  "Remove unwanted characters from current buffer.
+Bad characters are matched by `org-web-tools--pandoc-bad-chars-re'."
   (save-excursion
     (goto-char (point-min))
     (while (re-search-forward org-web-tools--pandoc-bad-chars-re nil t)
+      (replace-match ""))))
+
+(defun org-web-tools--remove-html-blocks ()
+  "Remove \"#+BEGIN_HTML...#+END_HTML\" blocks from current buffer."
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward (rx (optional "\n")
+                                  "#+BEGIN_HTML"
+                                  (minimal-match (1+ anything))
+                                  "#+END_HTML"
+                                  (optional "\n"))
+                              nil t)
       (replace-match ""))))
 
 (defconst org-web-tools--pandoc-no-wrap-option nil
