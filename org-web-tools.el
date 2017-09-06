@@ -113,7 +113,7 @@
     (buffer-string)))
 
 (defun org-web-tools--pandoc-no-wrap-option ()
-  "Return `org-web-tools--pandoc-no-wrap-option', setting if unset."
+  "Return option `org-web-tools--pandoc-no-wrap-option', setting if unset."
   (or org-web-tools--pandoc-no-wrap-option
       (setq org-web-tools--pandoc-no-wrap-option (org-web-tools--check-pandoc-no-wrap-option))))
 
@@ -183,7 +183,7 @@ Pandoc >= 1.16 deprecates `--no-wrap' in favor of
 ;;;###autoload
 (defun org-web-tools-insert-link-for-url (url)
   "Insert Org link to URL using title of HTML page at URL.
-If URL is not given, look for first URL in the kill-ring."
+If URL is not given, look for first URL in `kill-ring'."
   (interactive (list (org-web-tools--get-first-url)))
   (insert (org-web-tools--org-link-for-url url)))
 
@@ -259,7 +259,7 @@ outside of it) will be converted."
 
 (cl-defun org-web-tools--org-link-for-url (&optional (url (org-web-tools--get-first-url)))
   "Return Org link to URL using title of HTML page at URL.
-If URL is not given, look for first URL in the kill-ring."
+If URL is not given, look for first URL in `kill-ring'."
   (let* ((html (org-web-tools--get-url url))
          (title (org-web-tools--html-title html))
          (link (org-make-link-string url title)))
@@ -382,7 +382,7 @@ stars (i.e. the highest level possible has 1 star)."
        t nil skip))))
 
 (defun org-web-tools--get-first-url ()
-  "Return URL in clipboard, or first URL in the kill-ring, or nil if none."
+  "Return URL in clipboard, or first URL in the `kill-ring', or nil if none."
   (cl-loop for item in (append (list (gui-get-selection 'CLIPBOARD))
                                kill-ring)
            if (string-match (rx bol "http" (optional "s") "://") item)
