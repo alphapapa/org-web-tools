@@ -33,7 +33,7 @@
 ;; in the clipboard or kill-ring as Org-mode text in a new buffer,
 ;; processed with `eww-readable'.
 
-;; `org-web-tools-convert-url-list-to-page-entries': With point on a
+;; `org-web-tools-convert-links-to-page-entries': With point on a
 ;; list of URLs in an Org-mode buffer, replace the list of URLs with a
 ;; list of Org headings, each containing the web page content of that
 ;; URL, converted to Org-mode text and processed with `eww-readable'.
@@ -215,31 +215,45 @@ Page is processed with `eww-readable'."
       (rename-buffer (cdr (org-web-tools--read-org-bracket-link))))))
 
 ;;;###autoload
-(defun org-web-tools-convert-url-list-to-page-entries ()
-  "Convert list of URLs into Org entries containing page content.
-Page content is processed with `eww-readable'.  All URLs in the
-current entry (i.e. this does not look deeper in the subtree, or
+(defun org-web-tools-convert-links-to-page-entries ()
+  "Convert links in current entry into entries containing linked pages' content.
+Both plain links and Org bracket links are processed.  Page
+content is processed with `eww-readable'.  All links in the
+current entry (i.e. this does not look deeper in the subtree, nor
 outside of it) will be converted."
   (interactive)
-  (let ((level (org-outline-level))
-        (beg (org-entry-beginning-position))
-        url-beg url new-entry)
-    (while (progn
-             (goto-char beg)
-             (goto-char (org-entry-end-position))  ; Work from the bottom of the list to the top, makes it simpler
-             (setq url-beg (re-search-backward (rx "http" (optional "s") "://") beg 'no-error)))
-      (setq url (buffer-substring (line-beginning-position) (line-end-position)))
-      ;; TODO: Needs error handling
-      (when (setq new-entry (org-web-tools--url-as-readable-org url))
-        ;; FIXME: If a URL fails to fetch, this should skip it, but
-        ;; that means the failed URL will become part of the next
-        ;; entry's contents.  Might need to read the whole list at
-        ;; once, use markers to track the list's position, then
-        ;; replace the whole list with any errored URLs after it's
-        ;; done.
-        (goto-char url-beg) ; This should NOT be necessary!  But it is, because the point moves back down a line!  Why?!
-        (delete-region (line-beginning-position) (line-end-position))
-        (org-paste-subtree level new-entry)))))
+  (cl-flet ((prev-url (entry-beg)
+                      ;; Work from the bottom of the list to the top, makes it simpler
+                      (when (re-search-backward (rx "http" (optional "s") "://" (1+ (not (any space)))) entry-beg 'no-error)
+                        ;; Found link; see if it's an Org link
+                        (beginning-of-line)
+                        (if (re-search-forward org-bracket-link-analytic-regexp (line-end-position) 'noerror)
+                            ;; Org link
+                            (list ;; Reconstruct link from regexp groups
+                             (concat (match-string 1) (match-string 3))
+                             (match-beginning 0))
+                          ;; Plain link
+                          (list (match-string 0) (match-beginning 0))))))
+    (let ((level (1+ (org-outline-level)))
+          (entry-beg (org-entry-beginning-position))
+          link-beg url new-entry)
+      (goto-char (org-entry-end-position))
+      (while (-when-let* (((url link-beg) (save-excursion
+                                            (prev-url entry-beg)))
+                          (new-entry (org-web-tools--url-as-readable-org url)))
+               ;; TODO: Needs error handling
+               ;; FIXME: If a URL fails to fetch, this should skip it, but
+               ;; that means the failed URL will become part of the next
+               ;; entry's contents.  Might need to read the whole list at
+               ;; once, use markers to track the list's position, then
+               ;; replace the whole list with any errored URLs after it's
+               ;; done.
+               (goto-char link-beg) ; This should NOT be necessary!  But it is, because the point moves back down a line!  Why?!
+               (delete-region (line-beginning-position) (line-end-position))
+               (org-paste-subtree level new-entry)
+               ;; org-paste-subtree returns nil, so we have to return t
+               t)
+        t))))
 
 ;;;; Functions
 
