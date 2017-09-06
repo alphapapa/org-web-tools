@@ -37,7 +37,7 @@ Install [[https://github.com/magnars/dash.el][dash.el]], and [[https://github.co
 +  =org-web-tools-insert-link-for-url=: Insert an Org-mode link to the URL in the clipboard or kill-ring.  Downloads the page to get the HTML title.
 +  =org-web-tools-insert-web-page-as-entry=: Insert the web page for the URL in the clipboard or kill-ring as an Org-mode entry, as a sibling heading of the current entry.
 +  =org-web-tools-read-url-as-org=: Display the web page for the URL in the clipboard or kill-ring as Org-mode text in a new buffer, processed with =eww-readable=.
-+  =org-web-tools-convert-links-to-page-entries=: With point on a list of URLs in an Org-mode buffer, replace the list of URLs with a list of Org headings, each containing the web page content of that URL, converted to Org-mode text and processed with =eww-readable=.
++  =org-web-tools-convert-links-to-page-entries=: Convert all URLs and Org links in current Org entry to Org headings, each containing the web page content of that URL, converted to Org-mode text and processed with =eww-readable=.  This should be called on an entry that solely contains a list of URLs or links.
 
 ** Functions
 
