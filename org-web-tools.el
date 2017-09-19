@@ -271,7 +271,7 @@ Returns list (TITLE . HTML).  Based on `eww-readable'."
   (let* ((dom (with-temp-buffer
                 (insert html)
                 (libxml-parse-html-region (point-min) (point-max))))
-         (title (caddr (car (dom-by-tag dom 'title)))))
+         (title (cl-caddr (car (dom-by-tag dom 'title)))))
     (eww-score-readability dom)
     (cons title
           (with-temp-buffer
@@ -309,7 +309,7 @@ Uses the `dom' library."
   (let* ((dom (with-temp-buffer
                 (insert html)
                 (libxml-parse-html-region (point-min) (point-max))))
-         (title (caddr (car (dom-by-tag dom 'title)))))
+         (title (cl-caddr (car (dom-by-tag dom 'title)))))
     (org-web-tools--cleanup-title title)))
 
 (defun org-web-tools--url-as-readable-org (&optional url)
