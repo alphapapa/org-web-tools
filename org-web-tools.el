@@ -202,12 +202,13 @@ Page is processed with `eww-readable'."
       t)))
 
 ;;;###autoload
-(defun org-web-tools-read-url-as-org (url)
-  "Read URL's readable content in an Org buffer."
+(cl-defun org-web-tools-read-url-as-org (url &key (show-buffer-fn #'switch-to-buffer))
+  "Read URL's readable content in an Org buffer.
+Buffer is displayed using SHOW-BUFFER-FN."
   (interactive (list (org-web-tools--get-first-url)))
   (let ((entry (org-web-tools--url-as-readable-org url)))
     (when entry
-      (switch-to-buffer url)
+      (funcall show-buffer-fn url)
       (org-mode)
       (insert entry)
       ;; Set buffer title
