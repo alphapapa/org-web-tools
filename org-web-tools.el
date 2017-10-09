@@ -152,11 +152,13 @@
 
 (defun org-web-tools--remove-bad-characters ()
   "Remove unwanted characters from current buffer.
-Bad characters are matched by `org-web-tools--pandoc-bad-chars-re'."
+Bad characters are matched by `org-web-tools-pandoc-replacements'."
   (save-excursion
-    (goto-char (point-min))
-    (while (re-search-forward org-web-tools--pandoc-bad-chars-re nil t)
-      (replace-match ""))))
+    (cl-loop for (re . replacement) in org-web-tools-pandoc-replacements
+             do (progn
+                  (goto-char (point-min))
+                  (while (re-search-forward re nil t)
+                    (replace-match replacement))))))
 
 (defun org-web-tools--remove-html-blocks ()
   "Remove \"#+BEGIN_HTML...#+END_HTML\" blocks from current buffer."
@@ -175,8 +177,12 @@ Bad characters are matched by `org-web-tools--pandoc-bad-chars-re'."
 Pandoc >= 1.16 deprecates `--no-wrap' in favor of
 `--wrap=none'.")
 
-(defvar org-web-tools--pandoc-bad-chars-re (rx (or " " ""))
-  "Regular expression matching spurious characters to be removed from Pandoc output.")
+(defcustom org-web-tools-pandoc-replacements
+  (list (cons (rx "") ""))
+  "List of alists pairing regular expressions with a string that should replace each one.
+Used to clean output from Pandoc."
+  :type '(alist :key-type string
+                :value-type string))
 
 ;;;; Commands
 
@@ -328,6 +334,7 @@ first-level entry for writing comments."
   ;;  "%(org-web-tools--url-as-readable-org)")
   (-let* ((url (or url (org-web-tools--get-first-url)))
           (html (org-web-tools--get-url url))
+          (html (org-web-tools--sanitize-html html))
           ((title . readable) (org-web-tools--eww-readable html))
           (title (org-web-tools--cleanup-title (or title "")))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
@@ -345,6 +352,19 @@ first-level entry for writing comments."
               timestamp "\n\n"
               "** Article" "\n\n")
       (buffer-string))))
+
+(defun org-web-tools--sanitize-html (html)
+  "Sanitize HTML string."
+  ;; libxml-parse-html-region converts "&nbsp;" to " ", so we have to
+  ;; clean the HTML first.
+  (with-temp-buffer
+    (insert html)
+    (cl-loop for (match . replace) in (list (cons "&nbsp;" " "))
+             do (progn
+                  (goto-char (point-min))
+                  (while (re-search-forward match nil t)
+                    (replace-match replace))))
+    (buffer-string)))
 
 ;;;;; Misc
 
