@@ -22,7 +22,7 @@ If you installed from MELPA, just run one of the [[*Usage][commands]] below.  If
 
 ** Manual
 
-Install [[https://github.com/magnars/dash.el][dash.el]], and [[https://github.com/magnars/s.el][s.el]].  Then require this package in your init file:
+Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/tali713/esxml][esxml]], and [[https://github.com/magnars/s.el][s.el]].  Then require this package in your init file:
 
 #+BEGIN_SRC elisp
 (require 'org-web-tools)
@@ -41,10 +41,12 @@ Install [[https://github.com/magnars/dash.el][dash.el]], and [[https://github.co
 
  These are used in the commands above and may be useful in building your own commands.
 
++  =org-web-tools--dom-to-html=: Return parsed HTML DOM as an HTML string. Note: This is an approximation and is not necessarily correct HTML (e.g. IMG tags may be rendered with a closing "</img>" tag).
 +  =org-web-tools--eww-readable=: Return "readable" part of HTML with title.
 +  =org-web-tools--get-url=: Return content for URL as string.
 +  =org-web-tools--html-title=: Return title of HTML page.
-+  =org-web-tools--html-to-org-with-pandoc=: Return string of HTML converted to Org with Pandoc.
++  =org-web-tools--html-to-org-with-pandoc=: Return string of HTML converted to Org with Pandoc.  When SELECTOR is non-nil, the HTML is filtered using
+=esxml-query= SELECTOR and re-rendered to HTML with =org-web-tools--dom-to-html=, which see.
 +  =org-web-tools--url-as-readable-org=: Return string containing Org entry of URL's web page content.  Content is processed with =eww-readable= and Pandoc.  Entry will be a top-level heading, with article contents below a second-level "Article" heading, and a timestamp in the first-level entry for writing comments.
 +  =org-web-tools--demote-headings-below=: Demote all headings in buffer so the highest level is below LEVEL.
 +  =org-web-tools--get-first-url=: Return URL in clipboard, or first URL in the kill-ring, or nil if none.

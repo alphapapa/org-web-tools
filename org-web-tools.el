@@ -3,7 +3,7 @@
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools
 ;; Version: 0.1.0-pre
-;; Package-Requires: ((emacs "25.1") (org "9.0") (dash "2.12") (s "1.10.0"))
+;; Package-Requires: ((emacs "25.1") (org "9.0") (dash "2.12") (esxml "0.3.4") (s "1.10.0"))
 ;; Keywords: hypermedia, outlines, Org, Web
 
 ;;; Commentary:
@@ -42,6 +42,11 @@
 
 ;; These are used in the commands above and may be useful in building
 ;; your own commands.
+
+;; `org-web-tools--dom-to-html': Return parsed HTML DOM as an HTML
+;; string. Note: This is an approximation and is not necessarily
+;; correct HTML (e.g. IMG tags may be rendered with a closing "</img>"
+;; tag).
 
 ;; `org-web-tools--eww-readable': Return "readable" part of HTML with
 ;; title.
@@ -92,15 +97,26 @@
 (require 'cl-lib)
 (require 'dash)
 (require 'dom)
+(require 'esxml-query)
 (require 'eww)
 (require 'org)
 (require 's)
+(require 'shr)
 (require 'url)
 
 ;;;; Pandoc support
 
-(defun org-web-tools--html-to-org-with-pandoc (html)
-  "Return string of HTML converted to Org with Pandoc."
+(defun org-web-tools--html-to-org-with-pandoc (html &optional selector)
+  "Return string of HTML converted to Org with Pandoc.
+When SELECTOR is non-nil, the HTML is filtered using
+`esxml-query' SELECTOR and re-rendered to HTML with
+`org-web-tools--dom-to-html', which see."
+  (when selector
+    (setq html (->> (with-temp-buffer
+                      (insert html)
+                      (libxml-parse-html-region 1 (point-max)))
+                    (esxml-query selector)
+                    (org-web-tools--dom-to-html))))
   (with-temp-buffer
     (insert html)
     (unless (zerop (call-process-region (point-min) (point-max) "pandoc"
@@ -408,6 +424,30 @@ stars (i.e. the highest level possible has 1 star)."
          (dotimes (i adjust-by)
            (org-demote)))
        t nil skip))))
+
+(defun org-web-tools--dom-to-html (dom)
+  "Return parsed HTML object DOM as an HTML string.
+Note: This is an approximation and is not necessarily correct
+HTML (e.g. IMG tags may be rendered with a closing \"</img>\"
+tag)."
+  ;; NOTE: As the docstring says, certain HTML tags may not be
+  ;; rendered correctly, like IMG tags which aren't supposed to have
+  ;; closing </img> tags.  As far as I can tell, there is no canonical
+  ;; way to transform a parsed DOM back to correct HTML in Emacs.
+  ;; This is probably close enough to still be useful in many cases.
+  (cl-labels ((render (node)
+                      (cl-typecase node
+                        (string node)
+                        (list (concat "<"
+                                      (symbol-name (dom-tag node))
+                                      (when (dom-attributes node)
+                                        (concat " " (mapconcat #'attr (dom-attributes node) " ")))
+                                      ">"
+                                      (mapconcat #'render (dom-children node) "\n")
+                                      "</" (symbol-name (dom-tag node)) ">"))))
+              (attr (pair)
+                    (format "%s=\"%s\"" (car pair) (cdr pair))))
+    (render dom)))
 
 (defun org-web-tools--get-first-url ()
   "Return URL in clipboard, or first URL in the `kill-ring', or nil if none."
