@@ -45,7 +45,7 @@ Install [[https://github.com/magnars/dash.el][dash.el]], and [[https://github.co
 +  =org-web-tools--get-url=: Return content for URL as string.
 +  =org-web-tools--html-title=: Return title of HTML page.
 +  =org-web-tools--html-to-org-with-pandoc=: Return string of HTML converted to Org with Pandoc.
-+  =org-web-tools--url-as-readable-org=: Return string containing Org entry of URL=s web page content.  Content is processed with =eww-readable= and Pandoc.  Entry will be a top-level heading, with article contents below a second-level "Article" heading, and a timestamp in the first-level entry for writing comments.
++  =org-web-tools--url-as-readable-org=: Return string containing Org entry of URL's web page content.  Content is processed with =eww-readable= and Pandoc.  Entry will be a top-level heading, with article contents below a second-level "Article" heading, and a timestamp in the first-level entry for writing comments.
 +  =org-web-tools--demote-headings-below=: Demote all headings in buffer so the highest level is below LEVEL.
 +  =org-web-tools--get-first-url=: Return URL in clipboard, or first URL in the kill-ring, or nil if none.
 +  =org-web-tools--read-org-bracket-link=: Return (TARGET . DESCRIPTION) for Org bracket LINK or next link on current line.
