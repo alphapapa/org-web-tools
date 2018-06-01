@@ -319,7 +319,8 @@ headers ourselves."
                          ;; Skip HTTP headers
                          (delete-region (point-min) url-http-end-of-headers)
                          (buffer-string))))
-    (kill-buffer response-buffer)     ; Not sure if necessary to avoid leaking buffer
+    ;; NOTE: Be careful to kill the buffer, because `url' doesn't close it automatically.
+    (kill-buffer response-buffer)
     (with-temp-buffer
       ;; For some reason, running `decode-coding-region' in the
       ;; response buffer has no effect, so we have to do it in a
