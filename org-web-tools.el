@@ -53,6 +53,8 @@
 
 ;; `org-web-tools--get-url': Return content for URL as string.
 
+;; `org-web-tools--url-title': Return title of a page for a given URL.
+
 ;; `org-web-tools--html-title': Return title of HTML page.
 
 ;; `org-web-tools--html-to-org-with-pandoc': Return string of HTML
@@ -290,10 +292,8 @@ outside of it) will be converted."
 (cl-defun org-web-tools--org-link-for-url (&optional (url (org-web-tools--get-first-url)))
   "Return Org link to URL using title of HTML page at URL.
 If URL is not given, look for first URL in `kill-ring'."
-  (let* ((html (org-web-tools--get-url url))
-         (title (org-web-tools--html-title html))
-         (link (org-make-link-string url title)))
-    link))
+  (let ((title (org-web-tools--url-title url)))
+    (org-make-link-string url title)))
 
 (defun org-web-tools--eww-readable (html)
   "Return \"readable\" part of HTML with title.
@@ -331,6 +331,12 @@ headers ourselves."
           (decode-coding-region (point-min) (point-max) 'utf-8)
         (coding-system-error nil))
       (buffer-string))))
+
+;;;###autoload
+(defun org-web-tools--url-title (url)
+  "Return title of a page for a given URL.
+Uses the `dom' library."
+  (org-web-tools--html-title (org-web-tools--get-url url)))
 
 (defun org-web-tools--html-title (html)
   "Return title of HTML page.

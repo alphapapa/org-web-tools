@@ -44,6 +44,7 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 +  =org-web-tools--dom-to-html=: Return parsed HTML DOM as an HTML string. Note: This is an approximation and is not necessarily correct HTML (e.g. IMG tags may be rendered with a closing "</img>" tag).
 +  =org-web-tools--eww-readable=: Return "readable" part of HTML with title.
 +  =org-web-tools--get-url=: Return content for URL as string.
++  =org-web-tools--url-title=: Return title of a page for a given URL.
 +  =org-web-tools--html-title=: Return title of HTML page.
 +  =org-web-tools--html-to-org-with-pandoc=: Return string of HTML converted to Org with Pandoc.  When SELECTOR is non-nil, the HTML is filtered using
 =esxml-query= SELECTOR and re-rendered to HTML with =org-web-tools--dom-to-html=, which see.
