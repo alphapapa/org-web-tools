@@ -122,7 +122,7 @@ When SELECTOR is non-nil, the HTML is filtered using
     (unless (zerop (call-process-region (point-min) (point-max) "pandoc"
                                         t t nil
                                         (org-web-tools--pandoc-no-wrap-option)
-                                        "-f" "html" "-t" "org"))
+                                        "-f" "html-raw_html-native_divs" "-t" "org"))
       ;; TODO: Add error output, see org-protocol-capture-html
       (error "Pandoc failed"))
     (org-web-tools--clean-pandoc-output)
@@ -164,7 +164,8 @@ When SELECTOR is non-nil, the HTML is filtered using
 (defun org-web-tools--clean-pandoc-output ()
   "Remove unwanted things in current buffer of Pandoc output."
   (org-web-tools--remove-bad-characters)
-  (org-web-tools--remove-html-blocks))
+  (org-web-tools--remove-html-blocks)
+  (org-web-tools--remove-custom_id_properties))
 
 (defun org-web-tools--remove-bad-characters ()
   "Remove unwanted characters from current buffer.
@@ -184,6 +185,18 @@ Bad characters are matched by `org-web-tools-pandoc-replacements'."
                                   "#+BEGIN_HTML"
                                   (minimal-match (1+ anything))
                                   "#+END_HTML"
+                                  (optional "\n"))
+                              nil t)
+      (replace-match ""))))
+
+(defun org-web-tools--remove-custom_id_properties ()
+  "Remove property drawers containing only CUSTOM_ID properties."
+  ;; TODO: Might be good to also remove just the CUSTOM_ID in drawers containing other properties.
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward (rx (optional (1+ blank)) ":PROPERTIES:\n"
+                                  (optional (1+ blank)) ":CUSTOM_ID:" (1+ not-newline) "\n"
+                                  (optional (1+ blank)) ":END:"
                                   (optional "\n"))
                               nil t)
       (replace-match ""))))
