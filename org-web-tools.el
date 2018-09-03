@@ -444,6 +444,8 @@ stars (i.e. the highest level possible has 1 star)."
 Note: This is an approximation and is not necessarily correct
 HTML (e.g. IMG tags may be rendered with a closing \"</img>\"
 tag)."
+  ;; MAYBE: Use `shr-dom-print' instead?  (I think I wasn't aware of that function when I wrote
+  ;; this.)
   ;; NOTE: As the docstring says, certain HTML tags may not be
   ;; rendered correctly, like IMG tags which aren't supposed to have
   ;; closing </img> tags.  As far as I can tell, there is no canonical
