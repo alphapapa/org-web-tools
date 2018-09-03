@@ -104,6 +104,13 @@
 (require 'shr)
 (require 'url)
 
+;;;; Customization
+
+(defgroup org-web-tools nil
+  "Options for `org-web-tools.'"
+  :group 'org
+  :link '(url-link "http://github.com/alphapapa/org-web-tools"))
+
 ;;;; Pandoc support
 
 (defun org-web-tools--html-to-org-with-pandoc (html &optional selector)
