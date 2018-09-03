@@ -278,8 +278,7 @@ outside of it) will be converted."
                           ;; Plain link
                           (list (match-string 0) (match-beginning 0))))))
     (let ((level (1+ (org-outline-level)))
-          (entry-beg (org-entry-beginning-position))
-          link-beg url new-entry)
+          (entry-beg (org-entry-beginning-position)))
       (goto-char (org-entry-end-position))
       (while (-when-let* (((url link-beg) (save-excursion
                                             (prev-url entry-beg)))
@@ -329,7 +328,10 @@ the entire response, including headers, we must remove the
 headers ourselves."
   (let* ((response-buffer (url-retrieve-synchronously url nil t))
          (encoded-html (with-current-buffer response-buffer
-                         ;; Skip HTTP headers
+                         ;; Skip HTTP headers.
+                         ;; FIXME: Byte-compiling says that `url-http-end-of-headers' is a free
+                         ;; variable, which seems to be because it's not declared by url.el with
+                         ;; `defvar'.  Yet this seems to work fine...
                          (delete-region (point-min) url-http-end-of-headers)
                          (buffer-string))))
     ;; NOTE: Be careful to kill the buffer, because `url' doesn't close it automatically.
@@ -435,7 +437,7 @@ stars (i.e. the highest level possible has 1 star)."
       ;; Demote headings in buffer
       (org-map-entries
        (lambda ()
-         (dotimes (i adjust-by)
+         (dotimes (_ adjust-by)
            (org-demote)))
        t nil skip))))
 
