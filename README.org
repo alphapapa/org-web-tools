@@ -55,9 +55,9 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 * Changelog                                                      :noexport_1:
 
-** 1.0-pre
+** 1.0
 
-+ Initial release.
++ First declared stable release.
 
 * Development                                                    :noexport_1:
 
