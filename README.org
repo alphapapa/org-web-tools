@@ -55,6 +55,11 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 * Changelog                                                      :noexport_1:
 
+** 1.0.1
+
+*Changes*
++  Remove all property drawers that contain the =CUSTOM_ID= property from Pandoc output.
+
 ** 1.0
 
 + First declared stable release.
