@@ -123,6 +123,7 @@ When SELECTOR is non-nil, the HTML is filtered using
                       (insert html)
                       (libxml-parse-html-region 1 (point-max)))
                     (esxml-query selector)
+                    ;; MAYBE: Should probably use `shr-dom-print' instead.
                     (org-web-tools--dom-to-html))))
   (with-temp-buffer
     (insert html)
@@ -391,6 +392,7 @@ first-level entry for writing comments."
       ;; Insert article text
       (insert converted)
       ;; Demote in-article headings
+      ;; MAYBE: Use `org-paste-subtree' instead of demoting headings ourselves.
       (org-web-tools--demote-headings-below 2)
       ;; Insert headings at top
       (goto-char (point-min))
