@@ -117,6 +117,25 @@
 
 ;;;; Pandoc support
 
+(defconst org-web-tools--pandoc-no-wrap-option nil
+  "Option to pass to Pandoc to disable wrapping.
+Pandoc >= 1.16 deprecates `--no-wrap' in favor of
+`--wrap=none'.")
+
+(defcustom org-web-tools-pandoc-replacements
+  (list (cons (rx "") ""))
+  "List of alists pairing regular expressions with a string that should replace each one.
+Used to clean output from Pandoc."
+  :type '(alist :key-type string
+                :value-type string))
+
+(defcustom org-web-tools-pandoc-sleep-time 0.2
+  "When testing Pandoc the first time it's used in a session, wait this long for Pandoc to start.
+Normally this should not need to be changed, but if Pandoc takes
+unusually long to start on your system (which it seems to on
+FreeBSD, for some reason), you may need to increase this."
+  :type 'float)
+
 (defun org-web-tools--html-to-org-with-pandoc (html &optional selector)
   "Return string of HTML converted to Org with Pandoc.
 When SELECTOR is non-nil, the HTML is filtered using
@@ -218,25 +237,6 @@ Pandoc output."
           ;; should work.
           (re-search-forward org-property-drawer-re)
           (setf (buffer-substring (match-beginning 0) (match-end 0)) ""))))))
-
-(defconst org-web-tools--pandoc-no-wrap-option nil
-  "Option to pass to Pandoc to disable wrapping.
-Pandoc >= 1.16 deprecates `--no-wrap' in favor of
-`--wrap=none'.")
-
-(defcustom org-web-tools-pandoc-replacements
-  (list (cons (rx "") ""))
-  "List of alists pairing regular expressions with a string that should replace each one.
-Used to clean output from Pandoc."
-  :type '(alist :key-type string
-                :value-type string))
-
-(defcustom org-web-tools-pandoc-sleep-time 0.2
-  "When testing Pandoc the first time it's used in a session, wait this long for Pandoc to start.
-Normally this should not need to be changed, but if Pandoc takes
-unusually long to start on your system (which it seems to on
-FreeBSD, for some reason), you may need to increase this."
-  :type 'float)
 
 ;;;; Commands
 
