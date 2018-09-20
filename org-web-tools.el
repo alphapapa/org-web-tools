@@ -2,8 +2,8 @@
 
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools
-;; Version: 1.0.1
 ;; Package-Requires: ((emacs "25.1") (org "9.0") (dash "2.12") (esxml "0.3.4") (s "1.10.0"))
+;; Version: 1.1-pre
 ;; Keywords: hypermedia, outlines, Org, Web
 
 ;;; Commentary:
