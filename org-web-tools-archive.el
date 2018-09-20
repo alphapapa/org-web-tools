@@ -84,6 +84,30 @@ the page."
           (message "Attached %s archive of %s" size url))
       (delete-directory temp-dir 'recursive))))
 
+;;;###autoload
+(defun org-web-tools-view-archive ()
+  "Open Zip file archive of web page.
+Extracts to a temp directory and opens with
+`browse-url-default-browser'.  Note: the extracted files are left
+on-disk in the temp directory."
+  (interactive)
+  (unless (executable-find "unzip")
+    (error "Can't find unzip command"))
+  (let* ((attach-dir (org-attach-dir t))
+	 (files (org-attach-file-list attach-dir))
+	 (file (if (= (length files) 1)
+		   (car files)
+		 (completing-read "Open attachment: "
+				  (mapcar #'list files) nil t)))
+         (path (expand-file-name file attach-dir))
+         (temp-dir (make-temp-file "org-web-tools-view-archive-" 'dir))
+         (args (list path "-d" temp-dir)))
+    (unless (= 0 (apply #'call-process (executable-find "unzip")
+                        nil nil nil args))
+      (error "Unzipping failed"))
+    (browse-url-default-browser (concat "file://" temp-dir "/index.html"))
+    (message "Files extracted to: %s" temp-dir)))
+
 ;;;; Functions
 
 (defun org-web-tools-archive--url-archive-url (url)
