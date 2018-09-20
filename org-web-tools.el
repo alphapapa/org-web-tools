@@ -2,8 +2,8 @@
 
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools
-;; Package-Requires: ((emacs "25.1") (org "9.0") (dash "2.12") (esxml "0.3.4") (s "1.10.0"))
 ;; Version: 1.1-pre
+;; Package-Requires: ((emacs "25.1") (org "9.0") (dash "2.12") (esxml "0.3.4") (s "1.10.0") (request "0.3.0"))
 ;; Keywords: hypermedia, outlines, Org, Web
 
 ;;; Commentary:
@@ -102,7 +102,11 @@
 (require 'org)
 (require 's)
 (require 'shr)
+(require 'subr-x)
+(require 'thingatpt)
 (require 'url)
+
+(require 'org-web-tools-archive)
 
 ;;;; Customization
 
@@ -488,6 +492,13 @@ tag)."
                                kill-ring)
            if (string-match (rx bol "http" (optional "s") "://") item)
            return item))
+
+(defun org-web-tools--read-url ()
+  "Return URL at point, or from clipboard, or from kill-ring, or prompt for one."
+  (or (thing-at-point-url-at-point)
+      (org-element-property :raw-link (org-element-context))
+      (org-web-tools--get-first-url)
+      (read-string "URL: ")))
 
 (defun org-web-tools--read-org-bracket-link (&optional link)
   "Return (TARGET . DESCRIPTION) for Org bracket LINK or next link on current line."

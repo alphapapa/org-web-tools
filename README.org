@@ -22,7 +22,7 @@ If you installed from MELPA, just run one of the [[*Usage][commands]] below.  If
 
 ** Manual
 
-Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/tali713/esxml][esxml]], and [[https://github.com/magnars/s.el][s.el]].  Then require this package in your init file:
+Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/tali713/esxml][esxml]], [[https://github.com/tkf/emacs-request][request]], and [[https://github.com/magnars/s.el][s.el]].  Then require this package in your init file:
 
 #+BEGIN_SRC elisp
 (require 'org-web-tools)
@@ -36,6 +36,7 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 +  =org-web-tools-insert-web-page-as-entry=: Insert the web page for the URL in the clipboard or kill-ring as an Org-mode entry, as a sibling heading of the current entry.
 +  =org-web-tools-read-url-as-org=: Display the web page for the URL in the clipboard or kill-ring as Org-mode text in a new buffer, processed with =eww-readable=.
 +  =org-web-tools-convert-links-to-page-entries=: Convert all URLs and Org links in current Org entry to Org headings, each containing the web page content of that URL, converted to Org-mode text and processed with =eww-readable=.  This should be called on an entry that solely contains a list of URLs or links.
++  ~org-web-tools-attach-url-archive~: Download a Zip archive of a web page from [[http://archive.is/6AyZy][archive.is]] and attach with ~org-attach~.  (See also [[https://github.com/scallywag/org-board][org-board]]).
 
 ** Functions
 
@@ -50,12 +51,17 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 +  =org-web-tools--url-as-readable-org=: Return string containing Org entry of URL's web page content.  Content is processed with =eww-readable= and Pandoc.  Entry will be a top-level heading, with article contents below a second-level "Article" heading, and a timestamp in the first-level entry for writing comments.
 +  =org-web-tools--demote-headings-below=: Demote all headings in buffer so the highest level is below LEVEL.
 +  =org-web-tools--get-first-url=: Return URL in clipboard, or first URL in the kill-ring, or nil if none.
++  ~org-web-tools--read-url~: Return a URL by searching at point, then in clipboard, then in kill-ring, and finally prompting the user.
 +  =org-web-tools--read-org-bracket-link=: Return (TARGET . DESCRIPTION) for Org bracket LINK or next link on current line.
 +  =org-web-tools--remove-dos-crlf=: Remove all DOS CRLF (^M) in buffer.
 
 * Changelog                                                      :noexport_1:
 
 ** 1.1-pre
+
+*Additions*
++  Command ~org-web-tools-attach-url-archive~.
++  Function ~org-web-tools--read-url~.
 
 ** 1.0.1
 
