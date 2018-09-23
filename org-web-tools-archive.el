@@ -72,8 +72,7 @@ the page."
         (progn
           (url-copy-file archive-url local-path 'ok-if-exists 'keep-time)
           (setq size (file-size-human-readable
-                      (file-attribute-size
-                       (file-attributes local-path)))
+                      (nth 7 (file-attributes local-path)))
                 type (ignore-errors
                        (with-temp-buffer
                          (insert-file-contents-literally local-path)
