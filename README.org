@@ -14,7 +14,10 @@ For example, you can copy a URL to the clipboard or kill-ring, then run a comman
 
 * Installation                                                   :noexport_1:
 
-This package requires Emacs 25.1 or later.
+** Requirements
+
++  Emacs 25.1 or later.
++  Commands that process HTML into Org require [[https://pandoc.org/][Pandoc]].  *Note:* The output of current Pandoc versions differs substantially from versions that may still be present in stable Linux distros.  If you encounter any issues, please install a more recent version of Pandoc.
 
 ** MELPA
 
