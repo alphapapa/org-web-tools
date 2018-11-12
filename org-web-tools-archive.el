@@ -46,6 +46,17 @@ page.  So who knows.")
 (defvar org-web-tools-archive-debug-level nil
   "See `request-log-level'.")
 
+(defcustom org-web-tools-attach-url-archive-retry 15
+  "Retry attaching archives that aren't yet available."
+  :type '(choice (integer :tag "Retry asynchronously after N seconds")
+                 (const :tag "Don't retry, just give an error" nil))
+  :group 'org-web-tools)
+
+(defcustom org-web-tools-attach-url-archive-async-attempts 2
+  "Number of times to try to attach archives asynchronously."
+  :type 'integer
+  :group 'org-web-tools)
+
 ;;;; Commands
 
 (declare-function archive-find-type "arc-mode")
@@ -58,32 +69,20 @@ page.  So who knows.")
 (defun org-web-tools-attach-url-archive (url)
   "Download Zip archive of page at URL and attach with `org-attach'.
 This downloads what archive.is returns as the latest archive of
-the page."
+the page.
+
+Return value is undefined.  For calling from Lisp code, see
+`org-web-tools-attach-url-archive--1'."
   (interactive (list (org-web-tools--read-url)))
-  ;; Rather than forcing `org-attach' to load when this package is loaded, we'll just load it here,
-  ;; because `org-attach-attach' is not autoloaded.  Same for `arc-mode' and `archive-find-type'.
-  (require 'org-attach)
-  (require 'arc-mode)
-  (when-let* ((archive-url (org-web-tools-archive--url-archive-url url))
-              (temp-dir (make-temp-file "org-attach-download-link-" 'dir))
-              (encoded-url (url-hexify-string url))
-              (basename (concat encoded-url "--" (file-name-nondirectory (directory-file-name archive-url))))
-              (local-path (expand-file-name basename temp-dir))
-              (size t) (buffer t) (type t))
-    (unwind-protect
-        (progn
-          (url-copy-file archive-url local-path 'ok-if-exists 'keep-time)
-          (setq size (file-size-human-readable
-                      (nth 7 (file-attributes local-path)))
-                type (ignore-errors
-                       (with-temp-buffer
-                         (insert-file-contents-literally local-path)
-                         (archive-find-type))))
-          (unless (eq type 'zip)
-            (error "Archive not yet available.  Retry in a few seconds"))
-          (org-attach-attach local-path nil 'mv)
-          (message "Attached %s archive of %s" size url))
-      (delete-directory temp-dir 'recursive))))
+  (if-let* ((size (org-web-tools-attach-url-archive--1 url)))
+      (message "Attached %s archive of %s" size url)
+    (pcase-exhaustive org-web-tools-attach-url-archive-retry
+      ((pred integerp) (if (org-web-tools--attach-url-archive-async :url url
+                                                                    :id (org-id-get nil 'create))
+                           (message "Archive not yet available.  Retrying in %s seconds"
+                                    org-web-tools-attach-url-archive-retry)
+                         (error "Archive not available, and unable to retry (this shouldn't happen; please report this bug)")))
+      ('nil (error "Archive not yet available.  Retry in a few seconds.")))))
 
 ;;;###autoload
 (defun org-web-tools-view-archive ()
@@ -110,6 +109,50 @@ on-disk in the temp directory."
     (message "Files extracted to: %s" temp-dir)))
 
 ;;;; Functions
+
+(defun org-web-tools-attach-url-archive--1 (url)
+  "Return size in bytes if archive of URL is downloaded and attached at point successfully.
+Returns nil if unsuccessful."
+  ;; Rather than forcing `org-attach' to load when this package is loaded, we'll just load it here,
+  ;; because `org-attach-attach' is not autoloaded.  Same for `arc-mode' and `archive-find-type'.
+  (require 'org-attach)
+  (require 'arc-mode)
+  (when-let* ((archive-url (org-web-tools-archive--url-archive-url url))
+              (temp-dir (make-temp-file "org-attach-download-link-" 'dir))
+              (encoded-url (url-hexify-string url))
+              (basename (concat encoded-url "--" (file-name-nondirectory (directory-file-name archive-url))))
+              (local-path (expand-file-name basename temp-dir)))
+    (unwind-protect
+        (progn
+          (url-copy-file archive-url local-path 'ok-if-exists 'keep-time)
+          (pcase (ignore-errors
+                   (with-temp-buffer
+                     (insert-file-contents-literally local-path)
+                     (archive-find-type)))
+            ('zip (prog1
+                      (file-size-human-readable (nth 7 (file-attributes local-path)))
+                    (org-attach-attach local-path nil 'mv)))
+            (_ nil)))
+      (delete-directory temp-dir 'recursive))))
+
+(cl-defun org-web-tools--attach-url-archive-async (&key url id (attempts 0))
+  "Return a timer that adds an archive attachment of URL to entry with ID."
+  (let ((fn (lambda ()
+              (if-let* ((size (org-with-point-at (or (org-id-find id 'marker)
+                                                     (error "Can't find entry %s to attach archive of %s at" id url))
+                                (org-web-tools-attach-url-archive--1 url))))
+                  (message "Attached %s archive of %s" size url)
+                (if (>= (cl-incf attempts) org-web-tools-attach-url-archive-async-attempts)
+                    (if-let* ((marker (org-id-find id 'marker)))
+                        (progn
+                          (pop-to-buffer (marker-buffer marker))
+                          (goto-char marker)
+                          (error "Failed to attach archive of %s asynchronously.  Try again manually" url))
+                      (error "Failed to attach archive of %s asynchronously, and couldn't find entry %s" url id)))
+                (org-web-tools--attach-url-archive-async :url url :id id :attempts attempts)
+                (message "Archive of %s not yet available.  Retrying in %s seconds (%s attempts)"
+                         url org-web-tools-attach-url-archive-retry attempts)))))
+    (run-at-time org-web-tools-attach-url-archive-retry nil fn)))
 
 (defun org-web-tools-archive--url-archive-url (url)
   "Return URL to Zip archive of URL."
