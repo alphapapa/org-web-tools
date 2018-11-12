@@ -24,6 +24,8 @@
 
 ;;; Code:
 
+;; TODO: Add new org link type "attachment:" that can link to entry attachments.
+
 ;;;; Requirements
 
 (require 'browse-url)
