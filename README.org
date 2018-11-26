@@ -62,7 +62,13 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 ** 1.2-pre
 
-Nothing new yet.
+*Improvements*
++ Archiving tools:
+     -  Can use multiple functions to attempt archiving.
+     -  Associated options control retry attempts, delays, and fallbacks to other functions.
+     -  Function ~org-web-tools-archive--wget-tar~ archives a URL using =wget= and =tar=.
+     -  Command ~org-web-tools-archive-view~ handles both =zip= and =tar= archives.
+     -  The default settings attempt to archive with =archive.is=, and if that fails after retrying for 75 seconds, falls back to using =wget= and =tar=.
 
 ** 1.1
 

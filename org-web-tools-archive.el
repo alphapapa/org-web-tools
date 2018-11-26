@@ -30,6 +30,7 @@
 
 (require 'browse-url)
 (require 'cl-lib)
+(require 'seq)
 (require 'subr-x)
 
 (require 'dash)
@@ -38,24 +39,79 @@
 
 ;;;; Variables
 
-(defvar org-web-tools-archive-hostname "archive.is"
-  "archive.is seems to work.  Sometimes the server redirects to
-archive.fo.  And archive.today is what it shows at the top of the
-page.  So who knows.")
-
 (defvar org-web-tools-archive-debug-level nil
   "See `request-log-level'.")
 
-(defcustom org-web-tools-attach-url-archive-retry 15
-  "Retry attaching archives that aren't yet available."
-  :type '(choice (integer :tag "Retry asynchronously after N seconds")
-                 (const :tag "Don't retry, just give an error" nil))
+(defvar org-web-tools-attach-url-archive-attempts 0
+  "Current number of attempts in a retry chain.")
+
+(defvar org-web-tools-attach-url-archive-attempted-fns nil
+  "Functions used to attempt archive download.")
+
+;;;; Customization
+
+(defgroup org-web-tools-archive nil
+  "Options for archiving commands."
   :group 'org-web-tools)
 
-(defcustom org-web-tools-attach-url-archive-async-attempts 2
-  "Number of times to try to attach archives asynchronously."
-  :type 'integer
-  :group 'org-web-tools)
+(defcustom org-web-tools-archive-hostname "archive.is"
+  "Domain name to make requests for archive.is to.
+\"archive.is\" seems to work.  Sometimes the server redirects to
+archive.fo.  And archive.today is what it shows at the top of the
+page.  So who knows."
+  :type 'string)
+
+(defcustom org-web-tools-attach-archive-retry 15
+  "Retry attaching archives that aren't yet available."
+  :type '(choice (integer :tag "Retry asynchronously after N seconds")
+                 (const :tag "Don't retry, just give an error" nil)))
+
+(defcustom org-web-tools-attach-archive-max-attempts 6
+  "Number of times to try to attach archives asynchronously.
+If you use archive.is, it often requires a minute or two to fully
+archive a page, so consider the number of seconds set in
+`org-web-tools-attach-archive-retry' when setting this."
+  :type 'integer)
+
+(defcustom org-web-tools-attach-archive-retry-fallback 'org-web-tools-archive-fn
+  "Try other functions if retry limit is exceeded."
+  :type '(choice (const :tag "Other functions in `org-web-tools-archive-fn'" org-web-tools-archive-fn)
+                 (const :tag "Don't try other functions" nil)
+                 (repeat :tag "Custom functions" function)))
+
+(defcustom org-web-tools-archive-fn #'org-web-tools-archive--archive.is
+  "Function used to archive web pages."
+  :type '(choice (const :tag "archive.is" org-web-tools-archive--archive.is)
+                 (const :tag "wget | tar" org-web-tools-archive--wget-tar)
+                 (function :tag "Custom function")))
+
+(defcustom org-web-tools-archive-compressor "xz"
+  "Compressor for archives saved with wget.
+Filename extension for files made with tar-compatible
+compressor (without \".tar.\").  Tar will call the appropriate
+program for the extension."
+  :type '(choice (const "xz")
+                 (const "bzip2")
+                 (const "gz")
+                 (string :tag "Custom")))
+
+(defcustom org-web-tools-archive-wget-options
+  (list "--ignore-tags=script"
+        "--reject=ttf"
+        "--execute robots=off"
+        "--adjust-extension"
+        "--span-hosts"
+        "--convert-links"
+        "--page-requisites"
+        "--timestamping"
+        "--no-directories")
+  "Options passed to wget.
+Options which take arguments should have the option and argument
+passed as separate strings, or with the argument separated by
+\"=\".  Certain options are added automatically to facilitate
+subsequent archiving, like \"--directory-prefix\"; options which
+don't interfere with that are safe to add here."
+  :type '(repeat string))
 
 ;;;; Commands
 
@@ -66,26 +122,48 @@ page.  So who knows.")
 (declare-function org-web-tools--read-url "org-web-tools")
 
 ;;;###autoload
-(defun org-web-tools-attach-url-archive (url)
-  "Download Zip archive of page at URL and attach with `org-attach'.
-This downloads what archive.is returns as the latest archive of
-the page.
-
-Return value is undefined.  For calling from Lisp code, see
-`org-web-tools-attach-url-archive--1'."
+(defun org-web-tools-archive-attach (url)
+  "Download Zip archive of page at URL and attach with `org-attach'."
   (interactive (list (org-web-tools--read-url)))
-  (if-let* ((size (org-web-tools-attach-url-archive--1 url)))
-      (message "Attached %s archive of %s" size url)
-    (pcase-exhaustive org-web-tools-attach-url-archive-retry
-      ((pred integerp) (if (org-web-tools--attach-url-archive-async :url url
-                                                                    :id (org-id-get nil 'create))
-                           (message "Archive not yet available.  Retrying in %s seconds"
-                                    org-web-tools-attach-url-archive-retry)
-                         (error "Archive not available, and unable to retry (this shouldn't happen; please report this bug)")))
-      ('nil (error "Archive not yet available.  Retry in a few seconds.")))))
+  (pcase-exhaustive (org-web-tools-attach-url-archive--1 url)
+    ((and (pred stringp) size) (message "Attached %s archive of %s%s" size url
+                                        (when org-web-tools-attach-url-archive-attempted-fns
+                                          (format " (retried with function %s)" org-web-tools-archive-fn))))
+    ('retrying (message "Archive not yet available.  Retrying in %s seconds (%s/%s attempts)"
+                        org-web-tools-attach-archive-retry
+                        ;; Increment attempts by one, because this function is
+                        ;; first called outside of the lexical rebinding that
+                        ;; increments it.
+                        (1+ org-web-tools-attach-url-archive-attempts)
+                        org-web-tools-attach-archive-max-attempts))
+    ('retries-exceeded (if (not org-web-tools-attach-archive-retry-fallback)
+                           (progn
+                             (pop-to-buffer (current-buffer))
+                             (error "Retry limit exceeded when attaching archive of %s.  Try again manually" url))
+                         ;; Retry with other functions
+                         (if-let* ((org-web-tools-attach-archive-max-attempts 0)
+                                   (org-web-tools-archive-fn
+                                    ;; Bind to untried function
+                                    (car (seq-difference
+                                          (pcase org-web-tools-attach-archive-retry-fallback
+                                            ('org-web-tools-archive-fn
+                                             ;; List default choices and current choice
+                                             (-uniq (append (->> (get 'org-web-tools-archive-fn 'custom-type)
+                                                                 cdr
+                                                                 (--select (eq (car it) 'const))
+                                                                 (-map #'-last-item))
+                                                            (cdar (get 'org-web-tools-archive-fn 'customized-value)))))
+                                            ((pred listp) org-web-tools-attach-archive-retry-fallback))
+                                          org-web-tools-attach-url-archive-attempted-fns)))
+                                   (org-web-tools-attach-url-archive-attempted-fns (cons org-web-tools-archive-fn org-web-tools-attach-url-archive-attempted-fns)))
+                             (progn
+                               (message "Retrying with other functions...")
+                               (org-web-tools-archive-attach url))
+                           (error "Unable to attach archive of %s, no functions left to try" url))))
+    ('nil (error "Unable to archive %s.  Retry manually in a few seconds" url))))
 
 ;;;###autoload
-(defun org-web-tools-view-archive ()
+(defun org-web-tools-archive-view ()
   "Open Zip file archive of web page.
 Extracts to a temp directory and opens with
 `browse-url-default-browser'.  Note: the extracted files are left
@@ -99,69 +177,133 @@ on-disk in the temp directory."
 		   (car files)
 		 (completing-read "Open attachment: "
 				  (mapcar #'list files) nil t)))
-         (path (expand-file-name file attach-dir))
-         (temp-dir (make-temp-file "org-web-tools-view-archive-" 'dir))
-         (args (list path "-d" temp-dir)))
-    (unless (= 0 (apply #'call-process (executable-find "unzip")
-                        nil nil nil args))
-      (error "Unzipping failed"))
-    (browse-url-default-browser (concat "file://" temp-dir "/index.html"))
+         (extension (file-name-extension file))
+         (archive-path (expand-file-name file attach-dir))
+         (temp-dir (make-temp-file "org-web-tools-view-archive-" 'dir)))
+    (with-temp-buffer
+      (unless (zerop (pcase extension
+                       ;; TODO: If/when we want to support only Emacs 26+, we
+                       ;; can use the `rx' matcher instead of `file-name-extension',
+                       ;; and easily test for e.g. ".tar.xz".
+                       ("zip" (call-process (executable-find "unzip") nil t nil
+                                            archive-path "-d" temp-dir))
+                       ;; Assume that if it's not a zip file, it's a tar archive
+                       ;; (`extension' will be just, e.g. "xz").
+                       (_ (call-process (executable-find "tar") nil t nil
+                                        "--auto-compress"
+                                        "--extract"
+                                        "--directory" temp-dir
+                                        "--file" archive-path))))
+        (error "Extraction of file failed: %s" (buffer-string))))
+    (->> (directory-files temp-dir 'full-path (rx ".html" eos))
+         (--map (concat "file://" it))
+         (-map #'browse-url-default-browser))
     (message "Files extracted to: %s" temp-dir)))
 
 ;;;; Functions
 
+;; TODO: Support arbitrary archiving functions that should take a URL and return a path to an archive file.
+
 (defun org-web-tools-attach-url-archive--1 (url)
-  "Return size in bytes if archive of URL is downloaded and attached at point successfully.
-Returns nil if unsuccessful."
+  "Return size in bytes if archive of URL is attached to entry at point.
+Return `retrying' if attempt failed and retry timer was started.
+Return nil if unsuccessful."
   ;; Rather than forcing `org-attach' to load when this package is loaded, we'll just load it here,
-  ;; because `org-attach-attach' is not autoloaded.  Same for `arc-mode' and `archive-find-type'.
+  ;; because `org-attach-attach' is not autoloaded.
   (require 'org-attach)
-  (require 'arc-mode)
-  (when-let* ((archive-url (org-web-tools-archive--url-archive-url url))
-              (temp-dir (make-temp-file "org-attach-download-link-" 'dir))
-              (encoded-url (url-hexify-string url))
-              (basename (concat encoded-url "--" (file-name-nondirectory (directory-file-name archive-url))))
-              (local-path (expand-file-name basename temp-dir)))
-    (unwind-protect
-        (progn
-          (url-copy-file archive-url local-path 'ok-if-exists 'keep-time)
-          (pcase (ignore-errors
-                   (with-temp-buffer
-                     (insert-file-contents-literally local-path)
-                     (archive-find-type)))
-            ('zip (prog1
-                      (file-size-human-readable (nth 7 (file-attributes local-path)))
-                    (org-attach-attach local-path nil 'mv)))
-            (_ nil)))
-      (delete-directory temp-dir 'recursive))))
+  (pcase (funcall org-web-tools-archive-fn url)
+    ((and (pred stringp) local-path)
+     ;; Archive returned: attach and return size
+     (prog1 (file-size-human-readable (nth 7 (file-attributes local-path)))
+       (org-attach-attach local-path nil 'mv)))
+    ('nil
+     ;; Archive failed
+     (pcase-exhaustive org-web-tools-attach-archive-retry
+       ('nil nil)       ;; No retry
+       ((pred integerp) ;; Retry
+        (let ((attempts org-web-tools-attach-url-archive-attempts)
+              (id (org-id-get nil 'create)))
+          (if (>= (cl-incf attempts) org-web-tools-attach-archive-max-attempts)
+              'retries-exceeded
+            (when (org-web-tools-archive--retry :id id :url url
+                    :fn org-web-tools-archive-fn
+                    :delay org-web-tools-attach-archive-retry
+                    :attempts attempts)
+              'retrying))))))))
 
-(cl-defun org-web-tools--attach-url-archive-async (&key url id (attempts 0))
-  "Return a timer that adds an archive attachment of URL to entry with ID."
+(cl-defun org-web-tools-archive--retry (&key id url fn delay attempts)
+  "Start and return a timer that calls FN to attach archive of URL to entry with ID after DELAY seconds."
+  (declare (indent defun))
+  ;; FIXME: The byte-compiler says that `fn' is unused, but it is used.
   (let ((fn (lambda ()
-              (if-let* ((size (org-with-point-at (or (org-id-find id 'marker)
-                                                     (error "Can't find entry %s to attach archive of %s at" id url))
-                                (org-web-tools-attach-url-archive--1 url))))
-                  (message "Attached %s archive of %s" size url)
-                (if (>= (cl-incf attempts) org-web-tools-attach-url-archive-async-attempts)
-                    (if-let* ((marker (org-id-find id 'marker)))
-                        (progn
-                          (pop-to-buffer (marker-buffer marker))
-                          (goto-char marker)
-                          (error "Failed to attach archive of %s asynchronously.  Try again manually" url))
-                      (error "Failed to attach archive of %s asynchronously, and couldn't find entry %s" url id)))
-                (org-web-tools--attach-url-archive-async :url url :id id :attempts attempts)
-                (message "Archive of %s not yet available.  Retrying in %s seconds (%s attempts)"
-                         url org-web-tools-attach-url-archive-retry attempts)))))
-    (run-at-time org-web-tools-attach-url-archive-retry nil fn)))
+              (let ((org-web-tools-attach-url-archive-attempts attempts))
+                (org-with-point-at (or (org-id-find id 'marker)
+                                       (error "Can't find entry %s to attach archive of %s at" id url))
+                  (org-web-tools-archive-attach url))))))
+    (run-at-time delay nil fn)))
 
-(defun org-web-tools-archive--url-archive-url (url)
+;;;;; wget
+
+(cl-defun org-web-tools-archive--wget-tar (url)
+  "Return path to local archive of URL retrieved with wget and archived with tar.
+
+Temporary files downloaded with wget are deleted, but the
+temporary directory is not, because the archive is inside it."
+  (when-let* ((temp-dir (make-temp-file "org-web-tools-archive-" 'dir))
+              ;; TODO: Make archiver configurable.
+              (archive-name (concat (url-hexify-string url)
+                                    "--" (s-chop-prefix "org-web-tools-archive-"
+                                                        (file-name-nondirectory (directory-file-name temp-dir)))
+                                    ".tar." org-web-tools-archive-compressor))
+              (archive-path (expand-file-name archive-name temp-dir))
+              (wget-args (append (list "--no-directories" "--directory-prefix" "files")
+                                 org-web-tools-archive-wget-options
+                                 (list url)))
+              (tar-args (list "--create" "--auto-compress" "--file" archive-path "./")))
+    (unwind-protect
+        (with-temp-buffer
+          (cd temp-dir)
+          (if (zerop (apply #'call-process "wget" nil t nil wget-args))
+              ;; wget succeeded: archive with tar
+              (progn
+                (cd "files")
+                (if (zerop (apply #'call-process "tar" nil t nil tar-args))
+                    archive-path
+                  (message "tar failed: %s" (buffer-string))))
+            (message "wget-page failed: %s" (buffer-string))))
+      (delete-directory (expand-file-name "files" temp-dir) 'recursive))))
+
+;;;;; archive.is
+
+(defun org-web-tools-archive--archive.is (url)
+  "Return path to local archive of URL retrieved from archive.is.
+
+Caller is responsible for deleting archive's directory after
+moving it."
+  ;; Require `arc-mode' here for `archive-find-type'.  This avoids loading those packages until they are actually used.
+  (require 'arc-mode)
+  (when-let* ((archive-url (org-web-tools-archive--archive.is-archive-url url))
+              (temp-dir (make-temp-file "org-web-tools-archive-" 'dir))
+              (encoded-url (url-hexify-string url))
+              (basename (concat encoded-url "--" (s-chop-prefix "org-web-tools-archive-"
+                                                                (file-name-nondirectory (directory-file-name archive-url)))))
+              (local-path (expand-file-name basename temp-dir)))
+    (when (url-copy-file archive-url local-path 'ok-if-exists 'keep-time)
+      (pcase (ignore-errors
+               (with-temp-buffer
+                 (insert-file-contents-literally local-path)
+                 (archive-find-type)))
+        ('zip local-path)
+        (_ nil)))))
+
+(defun org-web-tools-archive--archive.is-archive-url (url)
   "Return URL to Zip archive of URL."
-  (when-let* ((id (org-web-tools-archive--url-id url)))
+  (when-let* ((id (org-web-tools-archive--archive.is-url-id url)))
     (concat "http://" org-web-tools-archive-hostname "/download/" id ".zip")))
 
-(defun org-web-tools-archive--url-id (url)
+(defun org-web-tools-archive--archive.is-url-id (url)
   "Return ID of most recent archive of URL."
-  (let* ((submitid (org-web-tools-archive--submitid))
+  (let* ((submitid (org-web-tools-archive--archive.is-submitid))
          (submit-url (concat "https://" org-web-tools-archive-hostname "/submit/"))
          (data (list (cons "anyway" 1)
                      (cons "submitid" submitid)
@@ -178,7 +320,7 @@ Returns nil if unsuccessful."
                         refresh)
       (match-string 1 refresh))))
 
-(defun org-web-tools-archive--submitid ()
+(defun org-web-tools-archive--archive.is-submitid ()
   "Return new submitid string.
 Raises an error if unable to get it."
   (let* ((url (concat "https://" org-web-tools-archive-hostname "/"))
