@@ -60,7 +60,7 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 * Changelog                                                      :noexport_1:
 
-** 1.1-pre
+** 1.1
 
 *Additions*
 +  Command ~org-web-tools-attach-url-archive~.
