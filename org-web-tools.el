@@ -369,7 +369,6 @@ headers ourselves."
   "Return title of HTML page.
 Uses the `dom' library."
   ;; Based on `eww-readable'
-  ;; TODO: Maybe use regexp instead of parsing whole DOM, should be faster
   (let* ((dom (with-temp-buffer
                 (insert html)
                 (libxml-parse-html-region (point-min) (point-max))))
