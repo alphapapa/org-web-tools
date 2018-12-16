@@ -249,6 +249,9 @@ Return nil if unsuccessful."
 
 Temporary files downloaded with wget are deleted, but the
 temporary directory is not, because the archive is inside it."
+  ;; MAYBE: If any page requisite file that wget tries to download is not found,
+  ;; wget will exit non-zero.  Might need an option or prefix arg to not
+  ;; consider that a fatal error, and give a warning instead.
   (when-let* ((temp-dir (make-temp-file "org-web-tools-archive-" 'dir))
               ;; TODO: Make archiver configurable.
               (archive-name (concat (url-hexify-string url)
@@ -269,8 +272,8 @@ temporary directory is not, because the archive is inside it."
                 (cd "files")
                 (if (zerop (apply #'call-process "tar" nil t nil tar-args))
                     archive-path
-                  (message "tar failed: %s" (buffer-string))))
-            (message "wget-page failed: %s" (buffer-string))))
+                  (warn "tar failed: %s" (buffer-string))))
+            (warn "wget-page failed: %s" (buffer-string))))
       (delete-directory (expand-file-name "files" temp-dir) 'recursive))))
 
 ;;;;; archive.is
