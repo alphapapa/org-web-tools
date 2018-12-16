@@ -96,7 +96,7 @@ program for the extension."
                  (string :tag "Custom")))
 
 (defcustom org-web-tools-archive-wget-options
-  (list "--ignore-tags=script"
+  (list "--ignore-tags=script,iframe"
         "--reject=ttf"
         "--execute robots=off"
         "--adjust-extension"
