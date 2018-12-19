@@ -33,6 +33,8 @@
 (require 'seq)
 (require 'subr-x)
 
+(require 'org-attach)
+
 (require 'dash)
 (require 'esxml-query)
 (require 'request)
@@ -116,9 +118,6 @@ don't interfere with that are safe to add here."
 ;;;; Commands
 
 (declare-function archive-find-type "arc-mode")
-(declare-function org-attach-attach "org-attach")
-(declare-function org-attach-dir "org-attach")
-(declare-function org-attach-file-list "org-attach")
 (declare-function org-web-tools--read-url "org-web-tools")
 
 ;;;###autoload

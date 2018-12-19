@@ -70,6 +70,11 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
      -  Command ~org-web-tools-archive-view~ handles both =zip= and =tar= archives.
      -  The default settings attempt to archive with =archive.is=, and if that fails after retrying for 75 seconds, falls back to using =wget= and =tar=.
 
+** 1.1.1
+
+*Fixed*
++  Require ~org-attach~.
+
 ** 1.1
 
 *Additions*
