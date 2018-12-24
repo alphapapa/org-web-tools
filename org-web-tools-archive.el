@@ -126,8 +126,9 @@ don't interfere with that are safe to add here."
   (interactive (list (org-web-tools--read-url)))
   (pcase-exhaustive (org-web-tools-attach-url-archive--1 url)
     ((and (pred stringp) size) (message "Attached %s archive of %s%s" size url
-                                        (when org-web-tools-attach-url-archive-attempted-fns
-                                          (format " (retried with function %s)" org-web-tools-archive-fn))))
+                                        (if org-web-tools-attach-url-archive-attempted-fns
+                                            (format " (retried with function %s)" org-web-tools-archive-fn)
+                                          "")))
     ('retrying (message "Archive not yet available.  Retrying in %s seconds (%s/%s attempts)"
                         org-web-tools-attach-archive-retry
                         ;; Increment attempts by one, because this function is
