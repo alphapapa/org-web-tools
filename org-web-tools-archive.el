@@ -198,6 +198,7 @@ on-disk in the temp directory."
                                         "--file" archive-path))))
         (error "Extraction of file failed: %s" (buffer-string))))
     (->> (directory-files temp-dir 'full-path (rx ".html" eos))
+         (-map #'org-web-tools-archive-view--escape-filename)
          (--map (concat "file://" it))
          (-map #'browse-url-default-browser))
     (message "Files extracted to: %s" temp-dir)))
@@ -205,6 +206,13 @@ on-disk in the temp directory."
 ;;;; Functions
 
 ;; TODO: Support arbitrary archiving functions that should take a URL and return a path to an archive file.
+
+(defun org-web-tools-archive--escape-filename (path)
+  "Return PATH with filename component escaped.
+In case it contains URL-unfriendly characters."
+  (let* ((directory (file-name-directory path))
+         (filename (file-name-nondirectory path)))
+    (expand-file-name (url-hexify-string filename) directory)))
 
 (defun org-web-tools-attach-url-archive--1 (url)
   "Return size in bytes if archive of URL is attached to entry at point.
