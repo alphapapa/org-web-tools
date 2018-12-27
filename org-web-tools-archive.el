@@ -236,15 +236,13 @@ Return nil if unsuccessful."
           (if (>= (cl-incf attempts) org-web-tools-attach-archive-max-attempts)
               'retries-exceeded
             (when (org-web-tools-archive--retry :id id :url url
-                    :fn org-web-tools-archive-fn
                     :delay org-web-tools-attach-archive-retry
                     :attempts attempts)
               'retrying))))))))
 
-(cl-defun org-web-tools-archive--retry (&key id url fn delay attempts)
+(cl-defun org-web-tools-archive--retry (&key id url delay attempts)
   "Start and return a timer that calls FN to attach archive of URL to entry with ID after DELAY seconds."
   (declare (indent defun))
-  ;; FIXME: The byte-compiler says that `fn' is unused, but it is used.
   (let ((fn (lambda ()
               (let ((org-web-tools-attach-url-archive-attempts attempts))
                 (org-with-point-at (or (org-id-find id 'marker)
