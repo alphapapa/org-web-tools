@@ -259,32 +259,32 @@ Return nil if unsuccessful."
 
 Temporary files downloaded with wget are deleted, but the
 temporary directory is not, because the archive is inside it."
-  ;; MAYBE: If any page requisite file that wget tries to download is not found,
-  ;; wget will exit non-zero.  Might need an option or prefix arg to not
-  ;; consider that a fatal error, and give a warning instead.
-  (when-let* ((temp-dir (make-temp-file "org-web-tools-archive-" 'dir))
-              ;; TODO: Make archiver configurable.
-              (archive-name (concat (url-hexify-string url)
-                                    "--" (s-chop-prefix "org-web-tools-archive-"
-                                                        (file-name-nondirectory (directory-file-name temp-dir)))
-                                    ".tar." org-web-tools-archive-compressor))
-              (archive-path (expand-file-name archive-name temp-dir))
-              (wget-args (append (list "--no-directories" "--directory-prefix" "files")
-                                 org-web-tools-archive-wget-options
-                                 (list url)))
-              (tar-args (list "--create" "--auto-compress" "--file" archive-path "./")))
-    (unwind-protect
-        (with-temp-buffer
-          (cd temp-dir)
-          (if (zerop (apply #'call-process "wget" nil t nil wget-args))
-              ;; wget succeeded: archive with tar
-              (progn
-                (cd "files")
-                (if (zerop (apply #'call-process "tar" nil t nil tar-args))
-                    archive-path
-                  (warn "tar failed: %s" (buffer-string))))
-            (warn "wget-page failed: %s" (buffer-string))))
-      (delete-directory (expand-file-name "files" temp-dir) 'recursive))))
+  (cl-macrolet ((call-tar ()
+                          `(progn
+                             (cd "files")
+                             (if (zerop (apply #'call-process "tar" nil t nil tar-args))
+                                 archive-path
+                               (warn "tar failed: %s" (buffer-string))))))
+    (when-let* ((temp-dir (make-temp-file "org-web-tools-archive-" 'dir))
+                ;; TODO: Make archiver configurable.
+                (archive-name (concat (url-hexify-string url)
+                                      "--" (s-chop-prefix "org-web-tools-archive-"
+                                                          (file-name-nondirectory (directory-file-name temp-dir)))
+                                      ".tar." org-web-tools-archive-compressor))
+                (archive-path (expand-file-name archive-name temp-dir))
+                (wget-args (append (list "--no-directories" "--directory-prefix" "files")
+                                   org-web-tools-archive-wget-options
+                                   (list url)))
+                (tar-args (list "--create" "--auto-compress" "--file" archive-path "./")))
+      (unwind-protect
+          (with-temp-buffer
+            (cd temp-dir)
+            (pcase (apply #'call-process "wget" nil t nil wget-args)
+              (0 (call-tar))
+              (8 (warn "wget exited with code 8, meaning that some errors were encountered.  They might be just 404s for some images.  Check the saved archived to be sure it was archived to your satisfaction.")
+                 (call-tar))
+              (_ (warn "wget-page failed: %s" (buffer-string)))))
+        (delete-directory (expand-file-name "files" temp-dir) 'recursive)))))
 
 ;;;;; archive.is
 
