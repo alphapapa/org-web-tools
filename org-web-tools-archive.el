@@ -32,6 +32,8 @@
 (require 'cl-lib)
 (require 'seq)
 (require 'subr-x)
+(require 'url-handlers)
+(require 'url-util)
 
 (require 'org-attach)
 
