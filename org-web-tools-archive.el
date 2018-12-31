@@ -207,7 +207,7 @@ on-disk in the temp directory."
 
 ;; TODO: Support arbitrary archiving functions that should take a URL and return a path to an archive file.
 
-(defun org-web-tools-archive--escape-filename (path)
+(defun org-web-tools-archive-view--escape-filename (path)
   "Return PATH with filename component escaped.
 In case it contains URL-unfriendly characters."
   (let* ((directory (file-name-directory path))
