@@ -279,9 +279,9 @@ temporary directory is not, because the archive is inside it."
             (cd temp-dir)
             (pcase (apply #'call-process "wget" nil t nil wget-args)
               (0 (call-tar))
-              (8 (warn "wget exited with code 8, meaning that some errors were encountered.  They might be just 404s for some images.  Check the saved archived to be sure it was archived to your satisfaction.")
-                 (call-tar))
-              (_ (warn "wget-page failed: %s" (buffer-string)))))
+              (code (message (prin1 (concat "wget output:\n\n" (buffer-string))))
+                    (warn "wget exited with code %s, meaning that some errors were encountered.  They might be just 404s for some images.  Check the saved archived to be sure it was archived to your satisfaction.  The full output from wget is in the \"*Messages*\" buffer." code)
+                    (call-tar))))
         (delete-directory (expand-file-name "files" temp-dir) 'recursive)))))
 
 ;;;;; archive.is
