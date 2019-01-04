@@ -41,6 +41,8 @@
 (require 'esxml-query)
 (require 'request)
 
+(require 'org-web-tools)
+
 ;;;; Variables
 
 (defvar org-web-tools-archive-debug-level nil

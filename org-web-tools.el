@@ -106,8 +106,6 @@
 (require 'thingatpt)
 (require 'url)
 
-(require 'org-web-tools-archive)
-
 ;;;; Customization
 
 (defgroup org-web-tools nil
