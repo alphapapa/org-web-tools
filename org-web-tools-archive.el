@@ -125,14 +125,21 @@ don't interfere with that are safe to add here."
 (declare-function org-web-tools--read-url "org-web-tools")
 
 ;;;###autoload
-(defun org-web-tools-archive-attach (url)
-  "Download Zip archive of page at URL and attach with `org-attach'."
-  (interactive (list (org-web-tools--read-url)))
+(defun org-web-tools-archive-attach (url &optional view)
+  "Download Zip archive of page at URL and attach with `org-attach'.
+If VIEW is non-nil (interactively, with prefix), view the archive
+immediately after attaching."
+  (interactive (list (org-web-tools--read-url) current-prefix-arg))
   (pcase-exhaustive (org-web-tools-attach-url-archive--1 url)
-    ((and (pred stringp) size) (message "Attached %s archive of %s%s" size url
-                                        (if org-web-tools-attach-url-archive-attempted-fns
-                                            (format " (retried with function %s)" org-web-tools-archive-fn)
-                                          "")))
+    ((and (pred stringp) size)
+     (message "Attached %s archive of %s%s" size url
+              (if org-web-tools-attach-url-archive-attempted-fns
+                  (format " (retried with function %s)" org-web-tools-archive-fn)
+                ""))
+     (when view
+       ;; TODO: Pass the filename directly in case of multiple attachments, so the user doesn't have to pick the right one.
+       (message "VIEWING")
+       (org-web-tools-archive-view)))
     ('retrying (message "Archive not yet available.  Retrying in %s seconds (%s/%s attempts)"
                         org-web-tools-attach-archive-retry
                         ;; Increment attempts by one, because this function is
