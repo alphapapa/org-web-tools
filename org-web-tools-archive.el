@@ -60,7 +60,7 @@
   "Options for archiving commands."
   :group 'org-web-tools)
 
-(defcustom org-web-tools-archive-hostname "archive.is"
+(defcustom org-web-tools-archive-hostname "archive.today"
   "Domain name to make requests for archive.is to.
 \"archive.is\" seems to work.  Sometimes the server redirects to
 archive.fo.  And archive.today is what it shows at the top of the

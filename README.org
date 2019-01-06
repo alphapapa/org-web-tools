@@ -39,7 +39,7 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 +  =org-web-tools-insert-web-page-as-entry=: Insert the web page for the URL in the clipboard or kill-ring as an Org-mode entry, as a sibling heading of the current entry.
 +  =org-web-tools-read-url-as-org=: Display the web page for the URL in the clipboard or kill-ring as Org-mode text in a new buffer, processed with =eww-readable=.
 +  =org-web-tools-convert-links-to-page-entries=: Convert all URLs and Org links in current Org entry to Org headings, each containing the web page content of that URL, converted to Org-mode text and processed with =eww-readable=.  This should be called on an entry that solely contains a list of URLs or links.
-+  ~org-web-tools-archive-attach~: Download a Zip archive of a web page from [[http://archive.is/6AyZy][archive.is]] and attach with ~org-attach~.  (See also [[https://github.com/scallywag/org-board][org-board]]).
++  ~org-web-tools-archive-attach~: Download a Zip archive of a web page from [[http://archive.today/][archive.today]] and attach with ~org-attach~.  With prefix, view archive after attaching.  (See also [[https://github.com/scallywag/org-board][org-board]]).
 +  ~org-web-tools-archive-view~: Open Zip file archive of web page. Extracts to a temp directory and opens with ~browse-url-default-browser~.  Note: the extracted files are left on-disk in the temp directory.
 
 ** Functions
