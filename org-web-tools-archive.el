@@ -125,53 +125,60 @@ don't interfere with that are safe to add here."
 (declare-function org-web-tools--read-url "org-web-tools")
 
 ;;;###autoload
-(defun org-web-tools-archive-attach (url &optional view)
-  "Download Zip archive of page at URL and attach with `org-attach'.
+(defun org-web-tools-archive-attach (url &optional view choose-fn)
+  "Download archive of page at URL and attach with `org-attach'.
 If VIEW is non-nil (interactively, with prefix), view the archive
-immediately after attaching."
-  (interactive (list (org-web-tools--read-url) current-prefix-arg))
-  (pcase-exhaustive (org-web-tools-attach-url-archive--1 url)
-    ((and (pred stringp) size)
-     (message "Attached %s archive of %s%s" size url
-              (if org-web-tools-attach-url-archive-attempted-fns
-                  (format " (retried with function %s)" org-web-tools-archive-fn)
-                ""))
-     (when view
-       ;; TODO: Pass the filename directly in case of multiple attachments, so the user doesn't have to pick the right one.
-       (message "VIEWING")
-       (org-web-tools-archive-view)))
-    ('retrying (message "Archive not yet available.  Retrying in %s seconds (%s/%s attempts)"
-                        org-web-tools-attach-archive-retry
-                        ;; Increment attempts by one, because this function is
-                        ;; first called outside of the lexical rebinding that
-                        ;; increments it.
-                        (1+ org-web-tools-attach-url-archive-attempts)
-                        org-web-tools-attach-archive-max-attempts))
-    ('retries-exceeded (if (not org-web-tools-attach-archive-retry-fallback)
-                           (progn
-                             (pop-to-buffer (current-buffer))
-                             (error "Retry limit exceeded when attaching archive of %s.  Try again manually" url))
-                         ;; Retry with other functions
-                         (if-let* ((org-web-tools-attach-archive-max-attempts 0)
-                                   (org-web-tools-archive-fn
-                                    ;; Bind to untried function
-                                    (car (seq-difference
-                                          (pcase org-web-tools-attach-archive-retry-fallback
-                                            ('org-web-tools-archive-fn
-                                             ;; List default choices and current choice
-                                             (-uniq (append (->> (get 'org-web-tools-archive-fn 'custom-type)
-                                                                 cdr
-                                                                 (--select (eq (car it) 'const))
-                                                                 (-map #'-last-item))
-                                                            (cdar (get 'org-web-tools-archive-fn 'customized-value)))))
-                                            ((pred listp) org-web-tools-attach-archive-retry-fallback))
-                                          org-web-tools-attach-url-archive-attempted-fns)))
-                                   (org-web-tools-attach-url-archive-attempted-fns (cons org-web-tools-archive-fn org-web-tools-attach-url-archive-attempted-fns)))
+immediately after attaching.  If CHOOSE-FN is
+non-nil (interactively, with double-prefix), prompt for the
+archive function to use."
+  (interactive (list (org-web-tools--read-url)
+                     current-prefix-arg
+                     (> (prefix-numeric-value current-prefix-arg) 4)))
+  (let ((org-web-tools-archive-fn (if choose-fn
+                                      (org-web-tools-archive--choose-archive-fn)
+                                    org-web-tools-archive-fn)))
+    (pcase-exhaustive (org-web-tools-attach-url-archive--1 url)
+      ((and (pred stringp) size)
+       (message "Attached %s archive of %s%s" size url
+                (if org-web-tools-attach-url-archive-attempted-fns
+                    (format " (retried with function %s)" org-web-tools-archive-fn)
+                  ""))
+       (when view
+         ;; TODO: Pass the filename directly in case of multiple attachments, so the user doesn't have to pick the right one.
+         (message "VIEWING")
+         (org-web-tools-archive-view)))
+      ('retrying (message "Archive not yet available.  Retrying in %s seconds (%s/%s attempts)"
+                          org-web-tools-attach-archive-retry
+                          ;; Increment attempts by one, because this function is
+                          ;; first called outside of the lexical rebinding that
+                          ;; increments it.
+                          (1+ org-web-tools-attach-url-archive-attempts)
+                          org-web-tools-attach-archive-max-attempts))
+      ('retries-exceeded (if (not org-web-tools-attach-archive-retry-fallback)
                              (progn
-                               (message "Retrying with other functions...")
-                               (org-web-tools-archive-attach url))
-                           (error "Unable to attach archive of %s, no functions left to try" url))))
-    ('nil (error "Unable to archive %s.  Retry manually in a few seconds" url))))
+                               (pop-to-buffer (current-buffer))
+                               (error "Retry limit exceeded when attaching archive of %s.  Try again manually" url))
+                           ;; Retry with other functions
+                           (if-let* ((org-web-tools-attach-archive-max-attempts 0)
+                                     (org-web-tools-archive-fn
+                                      ;; Bind to untried function
+                                      (car (seq-difference
+                                            (pcase org-web-tools-attach-archive-retry-fallback
+                                              ('org-web-tools-archive-fn
+                                               ;; List default choices and current choice
+                                               (-uniq (append (->> (get 'org-web-tools-archive-fn 'custom-type)
+                                                                   cdr
+                                                                   (--select (eq (car it) 'const))
+                                                                   (-map #'-last-item))
+                                                              (cdar (get 'org-web-tools-archive-fn 'customized-value)))))
+                                              ((pred listp) org-web-tools-attach-archive-retry-fallback))
+                                            org-web-tools-attach-url-archive-attempted-fns)))
+                                     (org-web-tools-attach-url-archive-attempted-fns (cons org-web-tools-archive-fn org-web-tools-attach-url-archive-attempted-fns)))
+                               (progn
+                                 (message "Retrying with other functions...")
+                                 (org-web-tools-archive-attach url))
+                             (error "Unable to attach archive of %s, no functions left to try" url))))
+      ('nil (error "Unable to archive %s.  Retry manually in a few seconds" url)))))
 
 ;;;###autoload
 (defun org-web-tools-archive-view ()
@@ -214,7 +221,15 @@ on-disk in the temp directory."
 
 ;;;; Functions
 
-;; TODO: Support arbitrary archiving functions that should take a URL and return a path to an archive file.
+(defun org-web-tools-archive--choose-archive-fn ()
+  "Return archive function selected from `custom-type' values of `org-web-tools-archive-fn'."
+  (let ((choices (cl-loop for choice in (cdr (plist-get (symbol-plist 'org-web-tools-archive-fn)
+                                                        'custom-type))
+                          for fn = (nth 3 choice)
+                          when fn
+                          collect (cons (plist-get (cdr choice) :tag)
+                                        fn))))
+    (alist-get (completing-read "Archive with: " choices) choices nil nil #'string=)))
 
 (defun org-web-tools-archive-view--escape-filename (path)
   "Return PATH with filename component escaped.
