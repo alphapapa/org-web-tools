@@ -487,7 +487,7 @@ tag)."
   "Return URL in clipboard, or first URL in the `kill-ring', or nil if none."
   (cl-loop for item in (append (list (gui-get-selection 'CLIPBOARD))
                                kill-ring)
-           if (string-match (rx bol "http" (optional "s") "://") item)
+           when (and item (string-match (rx bol "http" (optional "s") "://") item))
            return item))
 
 (defun org-web-tools--read-url ()

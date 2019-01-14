@@ -70,6 +70,11 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
      -  Command ~org-web-tools-archive-view~ handles both =zip= and =tar= archives.
      -  The default settings attempt to archive with =archive.is=, and if that fails after retrying for 75 seconds, falls back to using =wget= and =tar=.
 
+** 1.1.2
+
+*Fixed*
++  Only test non-nil items in ~org-web-tools--get-first-url~.  This makes it work properly in non-GUI Emacs sessions.  (Thanks to [[https://github.com/bsima][Ben Sima]] for reporting.)
+
 ** 1.1.1
 
 *Fixed*
