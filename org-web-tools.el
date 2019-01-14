@@ -2,7 +2,7 @@
 
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools
-;; Version: 1.1
+;; Version: 1.1.2
 ;; Package-Requires: ((emacs "25.1") (org "9.0") (dash "2.12") (esxml "0.3.4") (s "1.10.0") (request "0.3.0"))
 ;; Keywords: hypermedia, outlines, Org, Web
 
@@ -489,7 +489,7 @@ tag)."
   "Return URL in clipboard, or first URL in the `kill-ring', or nil if none."
   (cl-loop for item in (append (list (gui-get-selection 'CLIPBOARD))
                                kill-ring)
-           if (string-match (rx bol "http" (optional "s") "://") item)
+           when (and item (string-match (rx bol "http" (optional "s") "://") item))
            return item))
 
 (defun org-web-tools--read-url ()

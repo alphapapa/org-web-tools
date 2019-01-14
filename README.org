@@ -60,6 +60,11 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 * Changelog                                                      :noexport_1:
 
+** 1.1.2
+
+*Fixed*
++  Only test non-nil items in ~org-web-tools--get-first-url~.  This makes it work properly in non-GUI Emacs sessions.  (Thanks to [[https://github.com/bsima][Ben Sima]] for reporting.)
+
 ** 1.1.1
 
 *Fixed*
