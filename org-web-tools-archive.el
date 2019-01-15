@@ -103,7 +103,7 @@ program for the extension."
 
 (defcustom org-web-tools-archive-wget-options
   (list "--ignore-tags=script,iframe"
-        "--reject=eot,ttf,*.woff*"
+        "--reject=eot,ttf,svg,*.woff*"
         "--execute robots=off"
         "--adjust-extension"
         "--span-hosts"
