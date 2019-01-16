@@ -1,0 +1,24 @@
+#+PROPERTY: logging nil
+
+* Tasks
+
+** SOMEDAY Handle =Content-Encoding: gzip= HTML files that wget doesn't decompress
+
+=wget= does not seem to automatically decompress HTML files that are served like this:
+
+#+BEGIN_EXAMPLE
+  HTTP/1.1 200 OK
+  Content-Type: text/html
+  Content-Length: 14606
+  Connection: keep-alive
+  Date: Wed, 16 Jan 2019 16:54:06 GMT
+  Content-Encoding: gzip
+  Last-Modified: Wed, 16 Jan 2019 16:53:57 GMT
+#+END_EXAMPLE
+
+The resulting file =wget= saves to disk is still gzipped, so =tar= creates an archive of a single gzipped HTML file, and when the tar is unpacked, the result is a gzipped HTML file.  Then, ~browse-url-default-browser~, on my system, calls =xdg-open=, which shows the gzipped file in a compressed file viewer, like Ark, even though at least some browsers can display the gzipped HTML file directly.  
+
+So it still /works/, but it's a bit confusing.
+
++  I don't understand why =wget= (and =curl=!) save the gzipped HTML instead of decoding it.  I can't find any explanation in their man pages.
++  It's annoying that it's not opened by the browser, even when the browser can handle it.
