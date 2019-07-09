@@ -322,11 +322,14 @@ outside of it) will be converted."
 
 (cl-defun org-web-tools--org-link-for-url (&optional (url (org-web-tools--get-first-url)))
   "Return Org link to URL using title of HTML page at URL.
-If URL is not given, look for first URL in `kill-ring'."
+If URL is not given, look for first URL in `kill-ring'.  If page
+at URL has no title, return URL."
   (let* ((html (org-web-tools--get-url url))
-         (title (org-web-tools--html-title html))
-         (link (org-make-link-string url title)))
-    link))
+         (title (org-web-tools--html-title html)))
+    (if title
+        (org-make-link-string url title)
+      (message "HTML page at URL has no title")
+      url)))
 
 (defun org-web-tools--eww-readable (html)
   "Return \"readable\" part of HTML with title.
@@ -369,14 +372,15 @@ headers ourselves."
       (buffer-string))))
 
 (defun org-web-tools--html-title (html)
-  "Return title of HTML page.
+  "Return title of HTML page, or nil if it has none.
 Uses the `dom' library."
   ;; Based on `eww-readable'
   (let* ((dom (with-temp-buffer
                 (insert html)
                 (libxml-parse-html-region (point-min) (point-max))))
          (title (cl-caddr (car (dom-by-tag dom 'title)))))
-    (org-web-tools--cleanup-title title)))
+    (when title
+      (org-web-tools--cleanup-title title))))
 
 (defun org-web-tools--url-as-readable-org (&optional url)
   "Return string containing Org entry of URL's web page content.

@@ -62,6 +62,9 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 ** 1.2-pre
 
+*Fixed*
++  =org-web-tools--org-link-for-url= now returns the URL if the HTML page has no title tag.  This avoids an error, e.g. when used in an Org capture template.
+
 *Improvements*
 + Archiving tools:
      -  Can use multiple functions to attempt archiving.
