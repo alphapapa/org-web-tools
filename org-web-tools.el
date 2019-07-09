@@ -106,6 +106,11 @@
 (require 'thingatpt)
 (require 'url)
 
+;;;; Variables
+
+;; Silence byte-compiler.
+(defvar url-http-end-of-headers)
+
 ;;;; Customization
 
 (defgroup org-web-tools nil
