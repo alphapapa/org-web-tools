@@ -66,10 +66,12 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 +  =org-web-tools--org-link-for-url= now returns the URL if the HTML page has no title tag.  This avoids an error, e.g. when used in an Org capture template.
 
 *Improvements*
-+ Archiving tools:
++  Archiving tools:
      -  Can use multiple functions to attempt archiving.
      -  Associated options control retry attempts, delays, and fallbacks to other functions.
-     -  Function ~org-web-tools-archive--wget-tar~ archives a URL using =wget= and =tar=.
+     -  Functions to archive Web pages with =wget= and =tar=:
+          +  Function ~org-web-tools-archive--wget-tar~ archives a URL's Web page, including page resources.
+          +  Function =org-web-tools-archive--wget-tar-html-only= archives a URL's HTML only.
      -  Command ~org-web-tools-archive-view~ handles both =zip= and =tar= archives.
      -  The default settings attempt to archive with =archive.is=, and if that fails after retrying for 75 seconds, falls back to using =wget= and =tar=.
 

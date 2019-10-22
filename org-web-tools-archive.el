@@ -88,7 +88,8 @@ archive a page, so consider the number of seconds set in
 (defcustom org-web-tools-archive-fn #'org-web-tools-archive--archive.is
   "Function used to archive web pages."
   :type '(choice (const :tag "archive.is" org-web-tools-archive--archive.is)
-                 (const :tag "wget | tar" org-web-tools-archive--wget-tar)
+                 (const :tag "wget | tar (with page resources)" org-web-tools-archive--wget-tar)
+                 (const :tag "wget | tar (HTML only)" org-web-tools-archive--wget-tar-html-only)
                  (function :tag "Custom function")))
 
 (defcustom org-web-tools-archive-compressor "xz"
@@ -112,6 +113,19 @@ program for the extension."
         "--timestamping"
         "--no-directories")
   "Options passed to wget.
+Options which take arguments should have the option and argument
+passed as separate strings, or with the argument separated by
+\"=\".  Certain options are added automatically to facilitate
+subsequent archiving, like \"--directory-prefix\"; options which
+don't interfere with that are safe to add here."
+  :type '(repeat string))
+
+(defcustom org-web-tools-archive-wget-html-only-options
+  (list "--execute robots=off"
+        "--adjust-extension"
+        "--timestamping"
+        "--no-directories")
+  "Options passed to wget when only downloading HTML.
 Options which take arguments should have the option and argument
 passed as separate strings, or with the argument separated by
 \"=\".  Certain options are added automatically to facilitate
@@ -307,6 +321,14 @@ temporary directory is not, because the archive is inside it."
                     (warn "wget exited with code %s, meaning that some errors were encountered.  They might be just 404s for some images.  Check the saved archived to be sure it was archived to your satisfaction.  The full output from wget is in the \"*Messages*\" buffer." code)
                     (call-tar))))
         (delete-directory (expand-file-name "files" temp-dir) 'recursive)))))
+
+(defun org-web-tools-archive--wget-tar-html-only (url)
+  "Return path to local archive of URL retrieved with wget and archived with tar.
+Calls `org-web-tools-archive--wget-tar', but adjusts
+`org-web-tools-archive-wget-options' to only download HTML, not
+page requisites."
+  (let ((org-web-tools-archive-wget-options org-web-tools-archive-wget-html-only-options))
+    (org-web-tools-archive--wget-tar url)))
 
 ;;;;; archive.is
 
