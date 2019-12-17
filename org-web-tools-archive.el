@@ -139,12 +139,12 @@ don't interfere with that are safe to add here."
 (declare-function org-web-tools--read-url "org-web-tools")
 
 ;;;###autoload
-(defun org-web-tools-archive-attach (url &optional view choose-fn)
+(defun org-web-tools-archive-attach (url &optional choose-fn view)
   "Download archive of page at URL and attach with `org-attach'.
-If VIEW is non-nil (interactively, with prefix), view the archive
-immediately after attaching.  If CHOOSE-FN is
-non-nil (interactively, with double-prefix), prompt for the
-archive function to use."
+If CHOOSE-FN is non-nil (interactively, with universal prefix),
+prompt for the archive function to use.  If VIEW is
+non-nil (interactively, with two universal prefixes), view the
+archive immediately after attaching."
   (interactive (list (org-web-tools--read-url)
                      current-prefix-arg
                      (> (prefix-numeric-value current-prefix-arg) 4)))
