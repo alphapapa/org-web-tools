@@ -515,7 +515,7 @@ tag)."
           ;; Link passed as arg
           (when (string-match org-link-bracket-re link)
             (setq target (match-string-no-properties 1 link)
-                  desc (match-string-no-properties 3 link)))
+                  desc (match-string-no-properties 2 link)))
         ;; No arg; get link from buffer
         (when (re-search-forward org-link-bracket-re (point-at-eol) t)
           (setq target (match-string-no-properties 1)
