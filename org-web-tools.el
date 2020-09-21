@@ -513,13 +513,14 @@ tag)."
     (let (target desc)
       (if link
           ;; Link passed as arg
-          (when (string-match org-bracket-link-regexp link)
+          (when (string-match org-link-bracket-re link)
             (setq target (match-string-no-properties 1 link)
                   desc (match-string-no-properties 3 link)))
         ;; No arg; get link from buffer
-        (when (re-search-forward org-bracket-link-regexp (point-at-eol) t)
+        (when (re-search-forward org-link-bracket-re (point-at-eol) t)
           (setq target (match-string-no-properties 1)
-                desc (match-string-no-properties 3))))
+                desc (match-string-no-properties 2))
+	)
       (when (and target desc)
         ;; Link found; return parts
         (cons target desc)))))
