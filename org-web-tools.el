@@ -526,7 +526,7 @@ tag)."
     (when (and target desc)
       ;; Link found; return parts
       (cons target desc)))))
-(org-web-tools--read-org-bracket-link "[[http://google.com][google]]")
+
 
 (provide 'org-web-tools)
 
