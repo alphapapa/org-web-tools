@@ -62,6 +62,9 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 ** 1.2-pre
 
+*Compatibility*
++  Updated for Org 9.3's changes to ~org-bracket-link-regexp~.  (Thanks to [[https://github.com/bcc32][Aaron Zeng]] and [[https://github.com/akirak][Akira Komamura]].)
+
 *Fixed*
 +  =org-web-tools--org-link-for-url= now returns the URL if the HTML page has no title tag.  This avoids an error, e.g. when used in an Org capture template.
 

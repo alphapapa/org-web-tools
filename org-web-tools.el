@@ -506,6 +506,10 @@ tag)."
       (org-web-tools--get-first-url)
       (read-string "URL: ")))
 
+(defconst org-web-tools--link-desc-submatch
+  (if (version<= "9.3" org-version) 2 3)
+  "Match group index of link description in `org-bracket-link-regexp'.")
+
 (defun org-web-tools--read-org-bracket-link (&optional link)
   "Return (TARGET . DESCRIPTION) for Org bracket LINK or next link on current line."
   ;; Searching to the end of the line seems the simplest way
@@ -515,11 +519,11 @@ tag)."
           ;; Link passed as arg
           (when (string-match org-bracket-link-regexp link)
             (setq target (match-string-no-properties 1 link)
-                  desc (match-string-no-properties 3 link)))
+                  desc (match-string-no-properties org-web-tools--link-desc-submatch link)))
         ;; No arg; get link from buffer
         (when (re-search-forward org-bracket-link-regexp (point-at-eol) t)
           (setq target (match-string-no-properties 1)
-                desc (match-string-no-properties 3))))
+                desc (match-string-no-properties org-web-tools--link-desc-submatch))))
       (when (and target desc)
         ;; Link found; return parts
         (cons target desc)))))
