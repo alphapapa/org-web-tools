@@ -350,26 +350,42 @@ This uses `url-retrieve-synchronously' to make a request with the
 URL, then returns the response body.  Since that function returns
 the entire response, including headers, we must remove the
 headers ourselves."
-  (let* ((response-buffer (url-retrieve-synchronously url nil t))
-         (encoded-html (with-current-buffer response-buffer
-                         ;; Skip HTTP headers.
-                         ;; FIXME: Byte-compiling says that `url-http-end-of-headers' is a free
-                         ;; variable, which seems to be because it's not declared by url.el with
-                         ;; `defvar'.  Yet this seems to work fine...
-                         (delete-region (point-min) url-http-end-of-headers)
-                         (buffer-string))))
-    ;; NOTE: Be careful to kill the buffer, because `url' doesn't close it automatically.
-    (kill-buffer response-buffer)
-    (with-temp-buffer
-      ;; For some reason, running `decode-coding-region' in the
-      ;; response buffer has no effect, so we have to do it in a
-      ;; temp buffer.
-      (insert encoded-html)
-      (condition-case nil
-          ;; Fix undecoded text
-          (decode-coding-region (point-min) (point-max) 'utf-8)
-        (coding-system-error nil))
-      (buffer-string))))
+  (let ((response-buffer (url-retrieve-synchronously url nil t)))
+    (unwind-protect
+        (with-current-buffer response-buffer
+          (let ((charset (--if-let (org-web-tools--html-charset)
+                             (intern (downcase it))
+                           'utf-8)))
+            ;; Skip HTTP headers.
+            (delete-region (point-min) url-http-end-of-headers)
+            ;; FIXME: Byte-compiling says that `url-http-end-of-headers' is a free
+            ;; variable, which seems to be because it's not declared by url.el with
+            ;; `defvar'.  Yet this seems to work fine...
+            (condition-case-unless-debug nil
+                (decode-coding-string (buffer-string) charset)
+              (coding-system-error (buffer-string)))))
+      ;; NOTE: Be careful to kill the buffer, because `url' doesn't close it automatically.
+      (kill-buffer response-buffer))))
+
+(defconst org-web-tools-content-type-regexp
+  "text/html; charset=\\([-[:alnum:]]+\\)")
+
+(defun org-web-tools--html-charset ()
+  "FIXME"
+  (save-excursion
+    (goto-char (point-min))
+    ;; If the response contains a content-type header, try to retrieve
+    ;; charset from it.
+    (when (or (re-search-forward (concat "^Content-Type: "
+                                         org-web-tools-content-type-regexp "$")
+                                 url-http-end-of-headers t)
+              ;; Otherwise, look for an element that contains charset
+              ;; information.
+              (re-search-forward "<meta[[:space:]]+charset=[\"’]\\([-[:alnum:]]+\\)[\"’]"
+                                 nil t)
+              (re-search-forward org-web-tools-content-type-regexp
+                                 nil t))
+      (buffer-substring (match-beginning 1) (match-end 1)))))
 
 (defun org-web-tools--html-title (html)
   "Return title of HTML page, or nil if it has none.
