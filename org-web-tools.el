@@ -350,26 +350,13 @@ This uses `url-retrieve-synchronously' to make a request with the
 URL, then returns the response body.  Since that function returns
 the entire response, including headers, we must remove the
 headers ourselves."
-  (let* ((response-buffer (url-retrieve-synchronously url nil t))
-         (encoded-html (with-current-buffer response-buffer
-                         ;; Skip HTTP headers.
-                         ;; FIXME: Byte-compiling says that `url-http-end-of-headers' is a free
-                         ;; variable, which seems to be because it's not declared by url.el with
-                         ;; `defvar'.  Yet this seems to work fine...
-                         (delete-region (point-min) url-http-end-of-headers)
-                         (buffer-string))))
-    ;; NOTE: Be careful to kill the buffer, because `url' doesn't close it automatically.
-    (kill-buffer response-buffer)
-    (with-temp-buffer
-      ;; For some reason, running `decode-coding-region' in the
-      ;; response buffer has no effect, so we have to do it in a
-      ;; temp buffer.
-      (insert encoded-html)
-      (condition-case nil
-          ;; Fix undecoded text
-          (decode-coding-region (point-min) (point-max) 'utf-8)
-        (coding-system-error nil))
-      (buffer-string))))
+  (with-current-buffer (url-retrieve-synchronously url nil t)
+    (condition-case nil
+	(prog1
+	    ;; Fix undecoded text
+	    (decode-coding-string (buffer-substring url-http-end-of-headers (point-max)) 'utf-8 t)
+	  (kill-buffer))
+      (coding-system-error nil))))
 
 (defun org-web-tools--html-title (html)
   "Return title of HTML page, or nil if it has none.
