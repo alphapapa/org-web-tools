@@ -118,6 +118,11 @@
   :group 'org
   :link '(url-link "http://github.com/alphapapa/org-web-tools"))
 
+(defcustom org-web-tools-expand-relative-path nil
+  "TODO"
+  :group 'org-web-tools
+  :type 'boolean)
+
 ;;;; Pandoc support
 
 (defconst org-web-tools--pandoc-no-wrap-option nil
