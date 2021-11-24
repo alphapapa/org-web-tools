@@ -119,7 +119,7 @@
   :link '(url-link "http://github.com/alphapapa/org-web-tools"))
 
 (defcustom org-web-tools-expand-relative-path t
-  "TODO"
+  "Whether or not to expand the relative path in `org-web-tools--sanitize-html'."
   :group 'org-web-tools
   :type 'boolean)
 
