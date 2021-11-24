@@ -118,7 +118,7 @@
   :group 'org
   :link '(url-link "http://github.com/alphapapa/org-web-tools"))
 
-(defcustom org-web-tools-expand-relative-path nil
+(defcustom org-web-tools-expand-relative-path t
   "TODO"
   :group 'org-web-tools
   :type 'boolean)
@@ -424,17 +424,29 @@ first-level entry for writing comments."
 
 (defun org-web-tools--sanitize-html (html)
   "Sanitize HTML string."
-  ;; libxml-parse-html-region converts "&nbsp;" to " ", so we have to
-  ;; clean the HTML first.
   (with-temp-buffer
     (insert html)
+    ;; `libxml-parse-html-region' converts "&nbsp;" to " ", so we have to
+    ;; clean the HTML first.
     (cl-loop for (match . replace) in (list (cons "&nbsp;" " "))
              do (progn
                   (goto-char (point-min))
                   (while (re-search-forward match nil t)
                     (replace-match replace))))
-    (buffer-string)))
 
+    ;; Expand relative paths
+    (when org-web-tools-expand-relative-path
+      (goto-char (point-min))
+      (while (re-search-forward (rx
+                                 (or "href" "src") "="
+                                 (?  (or "\"" "'"))
+                                 (group (+ (not (or ">" "\"" "'")))))
+                                nil t)
+        (replace-match (save-match-data (url-expand-file-name (match-string 1)
+                                                              (org-web-tools--get-first-url)))
+                       nil nil nil 1)))
+
+    (buffer-string)))
 ;;;;; Misc
 
 (defun org-web-tools--cleanup-title (title)
