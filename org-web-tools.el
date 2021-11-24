@@ -402,7 +402,7 @@ first-level entry for writing comments."
   ;;  "%(org-web-tools--url-as-readable-org)")
   (-let* ((url (or url (org-web-tools--get-first-url)))
           (html (org-web-tools--get-url url))
-          (html (org-web-tools--sanitize-html html))
+          (html (org-web-tools--sanitize-html html url))
           ((title . readable) (org-web-tools--eww-readable html))
           (title (org-web-tools--cleanup-title (or title "")))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
@@ -422,8 +422,9 @@ first-level entry for writing comments."
               "** Article" "\n\n")
       (buffer-string))))
 
-(defun org-web-tools--sanitize-html (html)
+(defun org-web-tools--sanitize-html (html &optional url)
   "Sanitize HTML string."
+  (setq url (or url (org-web-tools--get-first-url) ""))
   (with-temp-buffer
     (insert html)
     ;; `libxml-parse-html-region' converts "&nbsp;" to " ", so we have to
@@ -442,8 +443,7 @@ first-level entry for writing comments."
                                  (?  (or "\"" "'"))
                                  (group (+ (not (or ">" "\"" "'")))))
                                 nil t)
-        (replace-match (save-match-data (url-expand-file-name (match-string 1)
-                                                              (org-web-tools--get-first-url)))
+        (replace-match (save-match-data (url-expand-file-name (match-string 1) url))
                        nil nil nil 1)))
 
     (buffer-string)))
