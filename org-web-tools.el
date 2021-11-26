@@ -444,7 +444,7 @@ first-level entry for writing comments."
                                  (group (+ (not (or ">" "\"" "'")))))
                                 nil t)
         (replace-match (save-match-data (url-expand-file-name (match-string 1) url))
-                       nil nil nil 1)))
+                       nil t nil 1)))
 
     (buffer-string)))
 ;;;;; Misc
