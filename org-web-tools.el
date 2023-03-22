@@ -402,7 +402,7 @@ first-level entry for writing comments."
           (title (org-web-tools--cleanup-title (or title "")))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
           (link (org-make-link-string url title))
-          (timestamp (format-time-string (concat "[" (substring (cdr org-time-stamp-formats) 1 -1) "]"))))
+          (timestamp (format-time-string (concat "[" (cdr org-time-stamp-formats) "]"))))
     (with-temp-buffer
       (org-mode)
       ;; Insert article text
