@@ -159,6 +159,7 @@ When SELECTOR is non-nil, the HTML is filtered using
                                         "-f" "html-raw_html-native_divs" "-t" "org"))
       ;; TODO: Add error output, see org-protocol-capture-html
       (error "Pandoc failed"))
+    (org-mode)
     (org-web-tools--clean-pandoc-output)
     (buffer-string)))
 
