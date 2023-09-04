@@ -510,7 +510,7 @@ HTML."
 
 (defconst org-web-tools--link-desc-submatch
   (if (version<= "9.3" org-version) 2 3)
-  "Match group index of link description in `org-bracket-link-regexp'.")
+  "Match group index of link description in `org-link-bracket-re'.")
 
 (defun org-web-tools--read-org-bracket-link (&optional link)
   "Return (TARGET . DESCRIPTION) for Org bracket LINK or next link on current line."
