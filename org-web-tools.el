@@ -118,6 +118,11 @@
   :group 'org
   :link '(url-link "http://github.com/alphapapa/org-web-tools"))
 
+(defcustom org-web-tools-expand-relative-path t
+  "Whether or not to expand the relative path in `org-web-tools--sanitize-html'."
+  :group 'org-web-tools
+  :type 'boolean)
+
 ;;;; Pandoc support
 
 (defconst org-web-tools--pandoc-no-wrap-option nil
@@ -398,7 +403,7 @@ first-level entry for writing comments."
   ;;  "%(org-web-tools--url-as-readable-org)")
   (-let* ((url (or url (org-web-tools--get-first-url)))
           (html (org-web-tools--get-url url))
-          (html (org-web-tools--sanitize-html html))
+          (html (org-web-tools--sanitize-html html url))
           ((title . readable) (org-web-tools--eww-readable html))
           (title (org-web-tools--cleanup-title (or title "")))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
@@ -418,19 +423,31 @@ first-level entry for writing comments."
               "** Article" "\n\n")
       (buffer-string))))
 
-(defun org-web-tools--sanitize-html (html)
+(defun org-web-tools--sanitize-html (html &optional url)
   "Sanitize HTML string."
-  ;; libxml-parse-html-region converts "&nbsp;" to " ", so we have to
-  ;; clean the HTML first.
+  (setq url (or url (org-web-tools--get-first-url) ""))
   (with-temp-buffer
     (insert html)
+    ;; `libxml-parse-html-region' converts "&nbsp;" to " ", so we have to
+    ;; clean the HTML first.
     (cl-loop for (match . replace) in (list (cons "&nbsp;" " "))
              do (progn
                   (goto-char (point-min))
                   (while (re-search-forward match nil t)
                     (replace-match replace))))
-    (buffer-string)))
 
+    ;; Expand relative paths
+    (when org-web-tools-expand-relative-path
+      (goto-char (point-min))
+      (while (re-search-forward (rx
+                                 (or "href" "src") "="
+                                 (?  (or "\"" "'"))
+                                 (group (+ (not (or ">" "\"" "'")))))
+                                nil t)
+        (replace-match (save-match-data (url-expand-file-name (match-string 1) url))
+                       nil t nil 1)))
+
+    (buffer-string)))
 ;;;;; Misc
 
 (defun org-web-tools--cleanup-title (title)
