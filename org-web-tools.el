@@ -5,7 +5,7 @@
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools
 ;; Version: 1.3-pre
-;; Package-Requires: ((emacs "27.1") (org "9.0") (compat "29.1.4.2") (dash "2.12") (esxml "0.3.4") (s "1.10.0") (request "0.3.0"))
+;; Package-Requires: ((emacs "27.1") (org "9.0") (compat "29.1.4.2") (dash "2.12") (esxml "0.3.4") (s "1.10.0") (plz "0.7") (request "0.3.0"))
 ;; Keywords: hypermedia, outlines, Org, Web
 
 ;;; Commentary:
@@ -54,8 +54,6 @@
 ;; title.
 
 ;; `org-web-tools--get-url': Return content for URL as string.
-
-;; `org-web-tools--html-title': Return title of HTML page.
 
 ;; `org-web-tools--html-to-org-with-pandoc': Return string of HTML
 ;; converted to Org with Pandoc.
@@ -107,12 +105,10 @@
 (require 'shr)
 (require 'subr-x)
 (require 'thingatpt)
-(require 'url)
+
+(require 'plz)
 
 ;;;; Variables
-
-;; Silence byte-compiler.
-(defvar url-http-end-of-headers)
 
 ;;;; Customization
 
@@ -328,63 +324,21 @@ outside of it) will be converted."
   "Return Org link to URL using title of HTML page at URL.
 If URL is not given, look for first URL in `kill-ring'.  If page
 at URL has no title, return URL."
-  (let* ((html (org-web-tools--get-url url))
-         (title (org-web-tools--html-title html)))
-    (if title
-        (org-link-make-string url title)
-      (message "HTML page at URL has no title")
-      url)))
+  (if-let ((dom (plz 'get url :as #'libxml-parse-html-region))
+           (title (cl-caddr (car (dom-by-tag dom 'title)))))
+      (org-link-make-string url (org-web-tools--cleanup-title title))
+    (message "HTML page at URL has no title")
+    url))
 
-(defun org-web-tools--eww-readable (html)
-  "Return \"readable\" part of HTML with title.
+(defun org-web-tools--eww-readable (dom)
+  "Return \"readable\" part of DOM with title.
 Returns list (TITLE . HTML).  Based on `eww-readable'."
-  (let* ((dom (with-temp-buffer
-                (insert html)
-                (libxml-parse-html-region (point-min) (point-max))))
-         (title (cl-caddr (car (dom-by-tag dom 'title)))))
+  (let ((title (cl-caddr (car (dom-by-tag dom 'title)))))
     (eww-score-readability dom)
     (cons title
           (with-temp-buffer
             (shr-dom-print (eww-highest-readability dom))
             (buffer-string)))))
-
-(defun org-web-tools--get-url (url)
-  "Return content for URL as string.
-This uses `url-retrieve-synchronously' to make a request with the
-URL, then returns the response body.  Since that function returns
-the entire response, including headers, we must remove the
-headers ourselves."
-  (let* ((response-buffer (url-retrieve-synchronously url nil t))
-         (encoded-html (with-current-buffer response-buffer
-                         ;; Skip HTTP headers.
-                         ;; FIXME: Byte-compiling says that `url-http-end-of-headers' is a free
-                         ;; variable, which seems to be because it's not declared by url.el with
-                         ;; `defvar'.  Yet this seems to work fine...
-                         (delete-region (point-min) url-http-end-of-headers)
-                         (buffer-string))))
-    ;; NOTE: Be careful to kill the buffer, because `url' doesn't close it automatically.
-    (kill-buffer response-buffer)
-    (with-temp-buffer
-      ;; For some reason, running `decode-coding-region' in the
-      ;; response buffer has no effect, so we have to do it in a
-      ;; temp buffer.
-      (insert encoded-html)
-      (condition-case nil
-          ;; Fix undecoded text
-          (decode-coding-region (point-min) (point-max) 'utf-8)
-        (coding-system-error nil))
-      (buffer-string))))
-
-(defun org-web-tools--html-title (html)
-  "Return title of HTML page, or nil if it has none.
-Uses the `dom' library."
-  ;; Based on `eww-readable'
-  (let* ((dom (with-temp-buffer
-                (insert html)
-                (libxml-parse-html-region (point-min) (point-max))))
-         (title (cl-caddr (car (dom-by-tag dom 'title)))))
-    (when title
-      (org-web-tools--cleanup-title title))))
 
 (defun org-web-tools--url-as-readable-org (&optional url)
   "Return string containing Org entry of URL's web page content.
@@ -400,9 +354,8 @@ first-level entry for writing comments."
   ;;  (file "~/org/articles.org")
   ;;  "%(org-web-tools--url-as-readable-org)")
   (-let* ((url (or url (org-web-tools--get-first-url)))
-          (html (org-web-tools--get-url url))
-          (html (org-web-tools--sanitize-html html))
-          ((title . readable) (org-web-tools--eww-readable html))
+          (dom (plz 'get url :as #'org-web-tools--sanitized-dom))
+          ((title . readable) (org-web-tools--eww-readable dom))
           (title (org-web-tools--cleanup-title (or title "")))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
           (link (org-link-make-string url title))
@@ -421,18 +374,16 @@ first-level entry for writing comments."
               "** Article" "\n\n")
       (buffer-string))))
 
-(defun org-web-tools--sanitize-html (html)
-  "Sanitize HTML string."
+(defun org-web-tools--sanitized-dom ()
+  "Return sanitized DOM for HTML in current buffer."
   ;; libxml-parse-html-region converts "&nbsp;" to " ", so we have to
   ;; clean the HTML first.
-  (with-temp-buffer
-    (insert html)
-    (cl-loop for (match . replace) in (list (cons "&nbsp;" " "))
-             do (progn
-                  (goto-char (point-min))
-                  (while (re-search-forward match nil t)
-                    (replace-match replace))))
-    (buffer-string)))
+  (cl-loop for (match . replace) in (list (cons "&nbsp;" " "))
+           do (progn
+                (goto-char (point-min))
+                (while (re-search-forward match nil t)
+                  (replace-match replace))))
+  (libxml-parse-html-region (point-min)))
 
 ;;;;; Misc
 
