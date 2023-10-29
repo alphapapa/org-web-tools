@@ -293,7 +293,7 @@ outside of it) will be converted."
                       (when (re-search-backward (rx "http" (optional "s") "://" (1+ (not (any space)))) entry-beg 'no-error)
                         ;; Found link; see if it's an Org link
                         (beginning-of-line)
-                        (if (re-search-forward org-bracket-link-analytic-regexp (line-end-position) 'noerror)
+                        (if (re-search-forward org-link-bracket-re (line-end-position) 'noerror)
                             ;; Org link
                             (list ;; Reconstruct link from regexp groups
                              (concat (match-string 1) (match-string 3))
@@ -329,7 +329,7 @@ at URL has no title, return URL."
   (let* ((html (org-web-tools--get-url url))
          (title (org-web-tools--html-title html)))
     (if title
-        (org-make-link-string url title)
+        (org-link-make-string url title)
       (message "HTML page at URL has no title")
       url)))
 
@@ -403,7 +403,7 @@ first-level entry for writing comments."
           ((title . readable) (org-web-tools--eww-readable html))
           (title (org-web-tools--cleanup-title (or title "")))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
-          (link (org-make-link-string url title))
+          (link (org-link-make-string url title))
           (timestamp (format-time-string (concat "[" (substring (cdr org-time-stamp-formats) 1 -1) "]"))))
     (with-temp-buffer
       (org-mode)
@@ -519,11 +519,11 @@ HTML."
     (let (target desc)
       (if link
           ;; Link passed as arg
-          (when (string-match org-bracket-link-regexp link)
+          (when (string-match org-link-bracket-re link)
             (setq target (match-string-no-properties 1 link)
                   desc (match-string-no-properties org-web-tools--link-desc-submatch link)))
         ;; No arg; get link from buffer
-        (when (re-search-forward org-bracket-link-regexp (point-at-eol) t)
+        (when (re-search-forward org-link-bracket-re (pos-eol) t)
           (setq target (match-string-no-properties 1)
                 desc (match-string-no-properties org-web-tools--link-desc-submatch))))
       (when (and target desc)
