@@ -56,6 +56,9 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 ** 1.3-pre
 
+*Fixes*
++ Default options to Wget (see [[https://github.com/alphapapa/org-web-tools/issues/35][#35]]).
+
 *Internal*
 + Use ~plz~ HTTP library and make various related optimizations.
 
