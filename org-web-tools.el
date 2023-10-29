@@ -1,5 +1,7 @@
 ;;; org-web-tools.el --- Display and capture web content with Org-mode  -*- lexical-binding: t -*-
 
+;; TODO: Add copyright line.
+
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools
 ;; Version: 1.2-pre
@@ -510,7 +512,7 @@ HTML."
 
 (defconst org-web-tools--link-desc-submatch
   (if (version<= "9.3" org-version) 2 3)
-  "Match group index of link description in `org-bracket-link-regexp'.")
+  "Match group index of link description in `org-link-bracket-re'.")
 
 (defun org-web-tools--read-org-bracket-link (&optional link)
   "Return (TARGET . DESCRIPTION) for Org bracket LINK or next link on current line."
