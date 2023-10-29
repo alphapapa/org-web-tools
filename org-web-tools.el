@@ -44,7 +44,7 @@
 ;; your own commands.
 
 ;; `org-web-tools--dom-to-html': Return parsed HTML DOM as an HTML
-;; string. Note: This is an approximation and is not necessarily
+;; string.  Note: This is an approximation and is not necessarily
 ;; correct HTML (e.g. IMG tags may be rendered with a closing "</img>"
 ;; tag).
 
@@ -115,7 +115,7 @@
 ;;;; Customization
 
 (defgroup org-web-tools nil
-  "Options for `org-web-tools.'"
+  "Options for `org-web-tools'."
   :group 'org
   :link '(url-link "http://github.com/alphapapa/org-web-tools"))
 
@@ -252,11 +252,12 @@ If URL is not given, look for first URL in `kill-ring'."
   (insert (org-web-tools--org-link-for-url url)))
 
 ;;;###autoload
-(cl-defun org-web-tools-insert-web-page-as-entry (url &key (capture-fn #'org-web-tools--url-as-readable-org))
+(cl-defun org-web-tools-insert-web-page-as-entry (url &key (capture-function #'org-web-tools--url-as-readable-org))
   "Insert web page contents of URL as Org sibling entry.
-Page is processed with `eww-readable'."
+CAPTURE-FUNCTION is called with URL to get the contents.  Page is
+processed with `eww-readable'."
   (interactive (list (org-web-tools--get-first-url)))
-  (let ((content (s-trim (funcall capture-fn url))))
+  (let ((content (s-trim (funcall capture-function url))))
     (unless (string-empty-p content)
       (unless (eq major-mode 'org-mode)
         (display-warning 'org-web-tools "Pasting Org subtree into non-org-mode buffer; this may cause problems"))
@@ -266,13 +267,13 @@ Page is processed with `eww-readable'."
       t)))
 
 ;;;###autoload
-(cl-defun org-web-tools-read-url-as-org (url &key (show-buffer-fn #'switch-to-buffer))
+(cl-defun org-web-tools-read-url-as-org (url &key (show-buffer-function #'switch-to-buffer))
   "Read URL's readable content in an Org buffer.
-Buffer is displayed using SHOW-BUFFER-FN."
+Buffer is displayed using SHOW-BUFFER-FUNCTION."
   (interactive (list (org-web-tools--get-first-url)))
   (let ((entry (org-web-tools--url-as-readable-org url)))
     (when entry
-      (funcall show-buffer-fn url)
+      (funcall show-buffer-function url)
       (org-mode)
       (insert entry)
       ;; Set buffer title
@@ -470,8 +471,7 @@ stars (i.e. the highest level possible has 1 star)."
 (defun org-web-tools--dom-to-html (dom)
   "Return parsed HTML object DOM as an HTML string.
 Note: This is an approximation and is not necessarily correct
-HTML (e.g. IMG tags may be rendered with a closing \"</img>\"
-tag)."
+HTML."
   ;; MAYBE: Use `shr-dom-print' instead?  (I think I wasn't aware of that function when I wrote
   ;; this.)
   ;; NOTE: As the docstring says, certain HTML tags may not be
@@ -502,7 +502,7 @@ tag)."
 
 (declare-function org-element-property "org-element")
 (defun org-web-tools--read-url ()
-  "Return URL at point, or from clipboard, or from kill-ring, or prompt for one."
+  "Return URL at point, from clipboard, from `kill-ring', or prompt."
   (or (thing-at-point-url-at-point)
       (org-element-property :raw-link (org-element-context))
       (org-web-tools--get-first-url)

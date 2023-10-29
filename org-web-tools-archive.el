@@ -61,10 +61,8 @@
   :group 'org-web-tools)
 
 (defcustom org-web-tools-archive-hostname "archive.today"
-  "Domain name to make requests for archive.is to.
-\"archive.is\" seems to work.  Sometimes the server redirects to
-archive.fo.  And archive.today is what it shows at the top of the
-page.  So who knows."
+  "Domain name to make requests for \"archive.is\" to.
+The service redirects to various domains."
   :type 'string)
 
 (defcustom org-web-tools-attach-archive-retry 15
@@ -93,7 +91,7 @@ archive a page, so consider the number of seconds set in
                  (function :tag "Custom function")))
 
 (defcustom org-web-tools-archive-compressor "xz"
-  "Compressor for archives saved with wget.
+  "Compressor for archives saved with Wget.
 Filename extension for files made with tar-compatible
 compressor (without \".tar.\").  Tar will call the appropriate
 program for the extension."
@@ -112,7 +110,7 @@ program for the extension."
         "--page-requisites"
         "--timestamping"
         "--no-directories")
-  "Options passed to wget.
+  "Options passed to Wget.
 Options which take arguments should have the option and argument
 passed as separate strings, or with the argument separated by
 \"=\".  Certain options are added automatically to facilitate
@@ -125,7 +123,7 @@ don't interfere with that are safe to add here."
         "--adjust-extension"
         "--timestamping"
         "--no-directories")
-  "Options passed to wget when only downloading HTML.
+  "Options passed to Wget when only downloading HTML.
 Options which take arguments should have the option and argument
 passed as separate strings, or with the argument separated by
 \"=\".  Certain options are added automatically to facilitate
@@ -139,16 +137,16 @@ don't interfere with that are safe to add here."
 (declare-function org-web-tools--read-url "org-web-tools")
 
 ;;;###autoload
-(defun org-web-tools-archive-attach (url &optional choose-fn view)
+(defun org-web-tools-archive-attach (url &optional choose-fn-p view)
   "Download archive of page at URL and attach with `org-attach'.
-If CHOOSE-FN is non-nil (interactively, with universal prefix),
+If CHOOSE-FN-P is non-nil (interactively, with universal prefix),
 prompt for the archive function to use.  If VIEW is
 non-nil (interactively, with two universal prefixes), view the
 archive immediately after attaching."
   (interactive (list (org-web-tools--read-url)
                      current-prefix-arg
                      (> (prefix-numeric-value current-prefix-arg) 4)))
-  (let ((org-web-tools-archive-fn (if choose-fn
+  (let ((org-web-tools-archive-fn (if choose-fn-p
                                       (org-web-tools-archive--choose-archive-fn)
                                     org-web-tools-archive-fn)))
     (pcase-exhaustive (org-web-tools-attach-url-archive--1 url)
@@ -381,8 +379,8 @@ moving it."
       (match-string 1 refresh))))
 
 (defun org-web-tools-archive--archive.is-submitid ()
-  "Return new submitid string.
-Raises an error if unable to get it."
+  "Return new submission ID string.
+Signal error if unable to get it."
   (let* ((url (concat "https://" org-web-tools-archive-hostname "/"))
          (parser (lambda ()
                    (-let* ((tree (libxml-parse-html-region (point) (point-max)))
@@ -398,7 +396,8 @@ Raises an error if unable to get it."
         (error "Unable to get submitid"))))
 
 (defun org-web-tools-archive--request (&rest args)
-  "Wrapper for `request'."
+  "Wrapper for `request'.
+Passes ARGS."
   (declare (indent defun))
   ;; When using the curl backend with "POST", `request' always returns before
   ;; the request actually completes.  So we use the `url-retrieve' backend,
