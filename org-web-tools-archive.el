@@ -83,7 +83,7 @@ archive a page, so consider the number of seconds set in
                  (const :tag "Don't try other functions" nil)
                  (repeat :tag "Custom functions" function)))
 
-(defcustom org-web-tools-archive-fn #'org-web-tools-archive--archive.is
+(defcustom org-web-tools-archive-fn #'org-web-tools-archive--wget-tar
   "Function used to archive web pages."
   :type '(choice (const :tag "archive.is" org-web-tools-archive--archive.is)
                  (const :tag "wget | tar (with page resources)" org-web-tools-archive--wget-tar)

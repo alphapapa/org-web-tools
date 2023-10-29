@@ -57,24 +57,27 @@ Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/ta
 
 ** 1.2-pre
 
-*Compatibility*
-+  Emacs 27.1 or later is now required.
-+  Updated for Org 9.3's changes to ~org-bracket-link-regexp~.  (Thanks to [[https://github.com/bcc32][Aaron Zeng]] and [[https://github.com/akirak][Akira Komamura]].)
-+  Activate ~org-mode~ in temporary buffer for ~org-web-tools--html-to-org-with-pandoc~.  ([[https://github.com/alphapapa/org-web-tools/issues/56][#56]].  Thanks to [[https://github.com/mooseyboots][mooseyboots]].)
-+  Use ~compat~ library.
-
-*Fixed*
-+  =org-web-tools--org-link-for-url= now returns the URL if the HTML page has no title tag.  This avoids an error, e.g. when used in an Org capture template.
-
 *Improvements*
-+  Archiving tools:
-     -  Can use multiple functions to attempt archiving.
-     -  Associated options control retry attempts, delays, and fallbacks to other functions.
-     -  Functions to archive Web pages with =wget= and =tar=:
-          +  Function ~org-web-tools-archive--wget-tar~ archives a URL's Web page, including page resources.
-          +  Function =org-web-tools-archive--wget-tar-html-only= archives a URL's HTML only.
-     -  Command ~org-web-tools-archive-view~ handles both =zip= and =tar= archives.
-     -  The default settings attempt to archive with =archive.is=, and if that fails after retrying for 75 seconds, falls back to using =wget= and =tar=.
++ Archiving tools:
+  - Can use multiple functions to attempt archiving.
+  - Associated options control retry attempts, delays, and fallbacks to other functions.
+  - Functions to archive Web pages with =wget= and =tar=:
+    + Function ~org-web-tools-archive--wget-tar~ archives a URL's Web page, including page resources.
+    + Function =org-web-tools-archive--wget-tar-html-only= archives a URL's HTML only.
+  - Command ~org-web-tools-archive-view~ handles both =zip= and =tar= archives.
+  - The default settings use =wget= and =tar= to archive pages (because the ~archive.today~ service has not worked reliably with external tools for a long time).
+
+*Changes*
++ Option ~org-web-tools-archive-fn~ defaults to using ~wget~ and ~tar~ to archive pages to XZ archives with HTML and page resources.  (The ~archive.is~ service has not worked reliably with other tools for a long time.)
+
+*Fixes*
++ =org-web-tools--org-link-for-url= now returns the URL if the HTML page has no title tag.  This avoids an error, e.g. when used in an Org capture template.
+
+*Compatibility*
++ Emacs 27.1 or later is now required.
++ Updated for Org 9.3's changes to ~org-bracket-link-regexp~.  (Thanks to [[https://github.com/bcc32][Aaron Zeng]] and [[https://github.com/akirak][Akira Komamura]].)
++ Activate ~org-mode~ in temporary buffer for ~org-web-tools--html-to-org-with-pandoc~.  ([[https://github.com/alphapapa/org-web-tools/issues/56][#56]].  Thanks to [[https://github.com/mooseyboots][mooseyboots]].)
++ Use ~compat~ library.
 
 ** 1.1.2
 
