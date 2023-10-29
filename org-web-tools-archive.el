@@ -236,7 +236,8 @@ on-disk in the temp directory."
 ;;;; Functions
 
 (defun org-web-tools-archive--choose-archive-fn ()
-  "Return archive function selected from `custom-type' values of `org-web-tools-archive-fn'."
+  "Return archive function.
+Selects from `custom-type' values of `org-web-tools-archive-fn'."
   (let ((choices (cl-loop for choice in (cdr (plist-get (symbol-plist 'org-web-tools-archive-fn)
                                                         'custom-type))
                           for fn = (nth 3 choice)
@@ -279,7 +280,9 @@ Return nil if unsuccessful."
               'retrying))))))))
 
 (cl-defun org-web-tools-archive--retry (&key id url delay attempts)
-  "Start and return a timer that calls FN to attach archive of URL to entry with ID after DELAY seconds."
+  "Start and return a timer for arguments.
+Timer calls FN to attach archive of URL to entry with ID after
+DELAY seconds."
   (declare (indent defun))
   (let ((fn (lambda ()
               (let ((org-web-tools-attach-url-archive-attempts attempts))
