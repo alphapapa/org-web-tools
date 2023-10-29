@@ -289,17 +289,17 @@ current entry (i.e. this does not look deeper in the subtree, nor
 outside of it) will be converted."
   (interactive)
   (cl-flet ((prev-url (entry-beg)
-                      ;; Work from the bottom of the list to the top, makes it simpler
-                      (when (re-search-backward (rx "http" (optional "s") "://" (1+ (not (any space)))) entry-beg 'no-error)
-                        ;; Found link; see if it's an Org link
-                        (beginning-of-line)
-                        (if (re-search-forward org-link-bracket-re (line-end-position) 'noerror)
-                            ;; Org link
-                            (list ;; Reconstruct link from regexp groups
-                             (concat (match-string 1) (match-string 3))
-                             (match-beginning 0))
-                          ;; Plain link
-                          (list (match-string 0) (match-beginning 0))))))
+              ;; Work from the bottom of the list to the top, makes it simpler
+              (when (re-search-backward (rx "http" (optional "s") "://" (1+ (not (any space)))) entry-beg 'no-error)
+                ;; Found link; see if it's an Org link
+                (beginning-of-line)
+                (if (re-search-forward org-link-bracket-re (line-end-position) 'noerror)
+                    ;; Org link
+                    (list ;; Reconstruct link from regexp groups
+                     (concat (match-string 1) (match-string 3))
+                     (match-beginning 0))
+                  ;; Plain link
+                  (list (match-string 0) (match-beginning 0))))))
     (let ((level (1+ (org-outline-level)))
           (entry-beg (org-entry-beginning-position)))
       (goto-char (org-entry-end-position))
@@ -480,17 +480,17 @@ HTML."
   ;; way to transform a parsed DOM back to correct HTML in Emacs.
   ;; This is probably close enough to still be useful in many cases.
   (cl-labels ((render (node)
-                      (cl-typecase node
-                        (string node)
-                        (list (concat "<"
-                                      (symbol-name (dom-tag node))
-                                      (when (dom-attributes node)
-                                        (concat " " (mapconcat #'attr (dom-attributes node) " ")))
-                                      ">"
-                                      (mapconcat #'render (dom-children node) "\n")
-                                      "</" (symbol-name (dom-tag node)) ">"))))
+                (cl-typecase node
+                  (string node)
+                  (list (concat "<"
+                                (symbol-name (dom-tag node))
+                                (when (dom-attributes node)
+                                  (concat " " (mapconcat #'attr (dom-attributes node) " ")))
+                                ">"
+                                (mapconcat #'render (dom-children node) "\n")
+                                "</" (symbol-name (dom-tag node)) ">"))))
               (attr (pair)
-                    (format "%s=\"%s\"" (car pair) (cdr pair))))
+                (format "%s=\"%s\"" (car pair) (cdr pair))))
     (render dom)))
 
 (defun org-web-tools--get-first-url ()

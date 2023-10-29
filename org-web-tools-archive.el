@@ -297,11 +297,11 @@ DELAY seconds."
 Temporary files downloaded with wget are deleted, but the
 temporary directory is not, because the archive is inside it."
   (cl-macrolet ((call-tar ()
-                          `(progn
-                             (cd "files")
-                             (if (zerop (apply #'call-process "tar" nil t nil tar-args))
-                                 archive-path
-                               (warn "tar failed: %s" (buffer-string))))))
+                  `(progn
+                     (cd "files")
+                     (if (zerop (apply #'call-process "tar" nil t nil tar-args))
+                         archive-path
+                       (warn "tar failed: %s" (buffer-string))))))
     (when-let* ((temp-dir (make-temp-file "org-web-tools-archive-" 'dir))
                 ;; TODO: Make archiver configurable.
                 (archive-name (concat (url-hexify-string url)
