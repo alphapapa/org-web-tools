@@ -324,7 +324,8 @@ outside of it) will be converted."
   "Return Org link to URL using title of HTML page at URL.
 If URL is not given, look for first URL in `kill-ring'.  If page
 at URL has no title, return URL."
-  (if-let ((dom (plz 'get url :as #'libxml-parse-html-region))
+  (if-let ((dom (plz 'get url :as (lambda ()
+                                    (libxml-parse-html-region (point-min) (point-max)))))
            (title (cl-caddr (car (dom-by-tag dom 'title)))))
       (org-link-make-string url (org-web-tools--cleanup-title title))
     (message "HTML page at URL has no title")
@@ -383,7 +384,7 @@ first-level entry for writing comments."
                 (goto-char (point-min))
                 (while (re-search-forward match nil t)
                   (replace-match replace))))
-  (libxml-parse-html-region (point-min)))
+  (libxml-parse-html-region (point-min) (point-max)))
 
 ;;;;; Misc
 
