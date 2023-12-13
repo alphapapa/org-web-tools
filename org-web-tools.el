@@ -450,7 +450,7 @@ HTML."
 (defun org-web-tools--get-first-url ()
   "Return URL in clipboard, or first URL in the `kill-ring', or nil if none."
   (cl-loop for item in (cons (current-kill 0) kill-ring)
-           when (and item (string-match (rx bol "http" (optional "s") "://") item))
+           when (and item (string-match-p (rx bol "http" (optional "s") "://") item))
            return item))
 
 (declare-function org-element-property "org-element")
