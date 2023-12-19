@@ -11,20 +11,12 @@ For example, you can copy a URL to the clipboard or kill-ring, then run a comman
 
 ** Requirements
 
-+  Emacs 25.1 or later.
-+  Commands that process HTML into Org require [[https://pandoc.org/][Pandoc]].  *Note:* The output of current Pandoc versions differs substantially from versions that may still be present in stable Linux distros.  If you encounter any issues, please install a more recent version of Pandoc.
++ Emacs 27.1 or later.
++ Commands that process HTML into Org require [[https://pandoc.org/][Pandoc]].  *Note:* The output of current Pandoc versions differs substantially from versions that may still be present in stable Linux distros.  If you encounter any issues, please install a more recent version of Pandoc.
 
 ** MELPA
 
-If you installed from MELPA, just run one of the [[*Usage][commands]] below.  If you want to use any of the functions in your own code, you should ~(require 'org-web-tools)~.
-
-** Manual
-
-Install [[https://github.com/magnars/dash.el][dash.el]], [[https://github.com/tali713/esxml][esxml]], [[https://github.com/tkf/emacs-request][request]], and [[https://github.com/magnars/s.el][s.el]].  Then require this package in your init file:
-
-#+BEGIN_SRC elisp
-(require 'org-web-tools)
-#+END_SRC
+After installing from MELPA, just run one of the [[*Usage][commands]] below.  If you want to use any of the functions in your own code, you should ~(require 'org-web-tools)~.
 
 * Usage                                                          :noexport_1:
 
