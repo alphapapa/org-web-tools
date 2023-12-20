@@ -151,15 +151,21 @@ When SELECTOR is non-nil, the HTML is filtered using
                     (org-web-tools--dom-to-html))))
   (with-temp-buffer
     (insert html)
-    (unless (zerop (call-process-region (point-min) (point-max) "pandoc"
-                                        t t nil
-                                        (org-web-tools--pandoc-no-wrap-option)
-                                        "-f" "html-raw_html-native_divs" "-t" "org"))
-      ;; TODO: Add error output, see org-protocol-capture-html
-      (error "Pandoc failed"))
-    (org-mode)
-    (org-web-tools--clean-pandoc-output)
-    (buffer-string)))
+    (let ((stderr-file (make-temp-file "org-web-tools-pandoc-stderr")))
+      (unwind-protect
+          (if (not (zerop (call-process-region (point-min) (point-max) "pandoc"
+                                               t (list t stderr-file) nil
+                                               "--verbose"
+                                               (org-web-tools--pandoc-no-wrap-option)
+                                               "-f" "html-raw_html-native_divs" "-t" "org")))
+              (progn
+                (delete-region (point-min) (point-max))
+                (insert-file-contents stderr-file)
+                (error "Pandoc failed: %s" (buffer-string)))
+            (org-mode)
+            (org-web-tools--clean-pandoc-output)
+            (buffer-string))
+        (delete-file stderr-file)))))
 
 (defun org-web-tools--pandoc-no-wrap-option ()
   "Return option `org-web-tools--pandoc-no-wrap-option', setting if unset."

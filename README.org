@@ -48,6 +48,9 @@ After installing from MELPA, just run one of the [[*Usage][commands]] below.  If
 
 ** 1.3-pre
 
+*Changes*
++ Errors from Pandoc are now displayed.  ([[https://github.com/alphapapa/org-web-tools/pull/47][#47]].  Thanks to [[https://github.com/c1-g][c1-g]].)
+
 *Fixes*
 + Default options to Wget (see [[https://github.com/alphapapa/org-web-tools/issues/35][#35]]).
 + Finding URL in clipboard on MacOS and Windows.  (See [[https://github.com/alphapapa/org-web-tools/pull/66][#66]].  Thanks to [[https://github.com/askdkc][@askdkc]].)
