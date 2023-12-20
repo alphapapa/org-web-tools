@@ -1,6 +1,6 @@
 ;;; org-web-tools.el --- Display and capture web content with Org-mode  -*- lexical-binding: t -*-
 
-;; TODO: Add copyright line.
+;; Copyright (C) 2017-2023  Adam Porter
 
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools

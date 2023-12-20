@@ -1,5 +1,7 @@
 ;;; org-web-tools-archive.el --- Tools for archive.is  -*- lexical-binding: t -*-
 
+;; Copyright (C) 2018-2023  Adam Porter
+
 ;; Author: Adam Porter <adam@alphapapa.net>
 ;; Url: http://github.com/alphapapa/org-web-tools
 
