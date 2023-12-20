@@ -51,6 +51,7 @@ After installing from MELPA, just run one of the [[*Usage][commands]] below.  If
 *Fixes*
 + Default options to Wget (see [[https://github.com/alphapapa/org-web-tools/issues/35][#35]]).
 + Finding URL in clipboard on MacOS and Windows.  (See [[https://github.com/alphapapa/org-web-tools/pull/66][#66]].  Thanks to [[https://github.com/askdkc][@askdkc]].)
++ Org timestamp format when inserting pages.  ([[https://github.com/alphapapa/org-web-tools/pull/54][#54]].  Thanks to [[https://github.com/p4v4n][p4v4n]] for reporting.)
 
 *Internal*
 + Use ~plz~ HTTP library and make various related optimizations.

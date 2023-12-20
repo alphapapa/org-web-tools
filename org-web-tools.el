@@ -360,7 +360,7 @@ first-level entry for writing comments."
           (title (org-web-tools--cleanup-title (or title "")))
           (converted (org-web-tools--html-to-org-with-pandoc readable))
           (link (org-link-make-string url title))
-          (timestamp (format-time-string (concat "[" (substring (cdr org-time-stamp-formats) 1 -1) "]"))))
+          (timestamp (format-time-string (org-time-stamp-format 'with-time 'inactive))))
     (with-temp-buffer
       (org-mode)
       ;; Insert article text
