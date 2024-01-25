@@ -196,7 +196,8 @@ When SELECTOR is non-nil, the HTML is filtered using
           (sleep-for org-web-tools-pandoc-sleep-time)
           (cl-incf checked)))
       (if (and (zerop (process-exit-status process))
-               (not (string-match "--no-wrap is deprecated" (buffer-string))))
+               (not (string-match "--no-wrap is deprecated" (buffer-string)))
+               (not (string-match "--no-wrap has been removed" (buffer-string))))
           "--no-wrap"
         "--wrap=none"))))
 
